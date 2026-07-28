@@ -1,0 +1,33 @@
+{
+  "_commentaire": "Criteres du dimensionnement (scripts/dimensionner.py). Tout est modifiable ici sans toucher au code.",
+
+  "modele": "GSA_model/Poutre ISO.gwb",
+  "section_id": 1,
+
+  "combinaisons": {
+    "_commentaire": "noms des combinaisons a chercher dans le modele (insensible a la casse)",
+    "ELU": "ELU",
+    "ELS": "ELS"
+  },
+
+  "critere_contrainte": {
+    "_commentaire": "ELU : plus grande amplitude (max signe / min signe) des contraintes GSA <= coefficient x fy. Par defaut TOUTES les mesures sont evaluees (C1, C2, A, By, Bz, VM, Sy, Sz, SEy, SEz, St — cf. MESURES_ELU dans scripts/dimensionner.py) ; ajouter une cle \"mesures\": [...] pour restreindre.",
+    "fy_Pa": 235000000,
+    "coefficient": 0.90
+  },
+
+  "critere_fleche": {
+    "_commentaire": "ELS : |Uz_max| <= L / denominateur (L = distance entre appuis)",
+    "denominateur": 300
+  },
+
+  "catalogue": "catalogues/IPE-AM.csv",
+  "serie_regex": "IPE\\d+",
+  "positions": 3,
+
+  "hauteur_max_m": 0.5,
+  "epaisseur_max_mm": 10,
+  "ratio_hauteur_depart": 20,
+  "ratio_largeur_depart": 3,
+  "_commentaire_escalade": "Regles de conception de depart de l'algorithme escalade (algo_opti/escalade.py), optimisation globale uniquement : hauteur de depart h0 = L / ratio_hauteur_depart, largeur de depart b0 = h0 / ratio_largeur_depart (RHS seulement), epaisseur minimale. L = longueur de LA BARRE (la plus longue de la famille), jamais la portee globale du modele. hauteur_max_m / epaisseur_max_mm plafonnent l'escalade (modifiables depuis la page, cf. /api/global criteres.hauteur_max_m / epaisseur_max_mm)."
+}

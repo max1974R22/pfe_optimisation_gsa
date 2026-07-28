@@ -1,0 +1,12 @@
+{
+  "profil_famille": "IPE",
+  "profil_nom": "IPE300",
+  "nuance_acier": "S235",
+  "portee_m": 6.5,
+  "conditions_appui": "appuye-appuye",
+  "prise_en_compte_poids_propre": "oui",
+  "charge_permanente_lineaire_z_kNm": 0,
+  "charge_variable_lineaire_z_kNm": 0,
+  "charge_permanente_ponctuelle_z_kN": 0,
+  "charge_variable_ponctuelle_z_kN": 0
+}

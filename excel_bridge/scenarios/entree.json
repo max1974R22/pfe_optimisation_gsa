@@ -1,0 +1,6 @@
+{
+  "profil_nom": "IPE300",
+  "portee_m": 6.5,
+  "charge_permanente_lineaire_z_kNm": 12,
+  "charge_variable_lineaire_z_kNm": 8
+}

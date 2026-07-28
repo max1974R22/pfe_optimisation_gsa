@@ -1,0 +1,130 @@
+{
+  "workbookRelativePath": "reference/excels/Predim_poutre acier_v3_GSA.xlsm",
+  "sheet": "Calcul",
+  "notes": "Adresses verifiees par ouverture reelle du classeur (COM/xlwings), pas par lecture du XML. Le classeur calcule lui-meme le torseur de sollicitations (N,Ed / My,Ed / Vz,Ed ...) a partir des charges : les cles torseur_* et m*_debut/milieu/fin ECRASENT ces formules (copie de travail uniquement) pour saisir directement des sollicitations SANS chargement - c'est le mode 'verification d'une barre isolee'. Convention de signe du classeur : N > 0 = traction (le flambement est ignore si N > 0).",
+
+  "profileSelector": {
+    "familyAddress": "AB2",
+    "designationAddress": "AB10",
+    "description": "profil_famille + profil_nom sont traites specialement par bridge.py : la designation (ex 'IPE300') est cherchee dans la colonne B de l'onglet de la famille pour retrouver l'index numerique attendu en AB10."
+  },
+
+  "inputs": {
+    "nuance_acier": {
+      "address": "AG1",
+      "valueMap": {"S235": 1, "S275": 2, "S355": 3, "S420": 4, "S460": 5, "custom": 6},
+      "description": "1=S235, 2=S275, 3=S355, 4=S420, 5=S460, 6=custom (necessite alors R7). Accepte aussi directement le nombre 1-6."
+    },
+    "portee_m": {
+      "namedRange": "Lo",
+      "description": "Portee de la poutre en m"
+    },
+    "longueur_flambement_y_m": {
+      "address": "G15",
+      "description": "Optionnel : par defaut = portee (formule '=Lo'). Ecrire une valeur ecrase la formule."
+    },
+    "longueur_flambement_z_m": {
+      "address": "G16",
+      "description": "Optionnel : par defaut = portee (formule '=Lo')."
+    },
+    "longueur_deversement_m": {
+      "address": "G17",
+      "description": "Optionnel : par defaut = portee (formule '=Lo')."
+    },
+    "conditions_appui": {
+      "address": "J14",
+      "valueMap": {
+        "encastre-encastre": "1. Encastré / Encastré",
+        "appuye-encastre": "2. Appuyé / Encastré",
+        "appuye-appuye": "3. Appuyé / Appuyé",
+        "encastre-libre": "4. Encastré / "
+      },
+      "description": "Raccourcis acceptes : encastre-encastre, appuye-encastre, appuye-appuye, encastre-libre (ou le texte exact de la liste deroulante)."
+    },
+    "prise_en_compte_poids_propre": {
+      "address": "J16",
+      "valueMap": {"oui": "1. Oui", "non": "2. Non"},
+      "description": "oui / non"
+    },
+    "charge_permanente_lineaire_z_kNm": { "address": "F22", "description": "G(Fz), charge repartie permanente verticale, kN/m" },
+    "charge_variable_lineaire_z_kNm":   { "address": "F23", "description": "Q(Fz), charge repartie variable verticale, kN/m" },
+    "charge_permanente_ponctuelle_z_kN": { "address": "G22", "description": "G(Fz), charge ponctuelle permanente verticale, kN" },
+    "charge_variable_ponctuelle_z_kN":   { "address": "G23", "description": "Q(Fz), charge ponctuelle variable verticale, kN" },
+    "position_ponctuelle_permanente_z_m": { "address": "H22", "description": "Position x (m) de la charge ponctuelle permanente verticale" },
+    "position_ponctuelle_variable_z_m":   { "address": "H23", "description": "Position x (m) de la charge ponctuelle variable verticale" },
+
+    "charge_permanente_lineaire_y_kNm": { "address": "F24", "description": "G(Fy), charge repartie permanente horizontale, kN/m" },
+    "charge_variable_lineaire_y_kNm":   { "address": "F25", "description": "Q(Fy), charge repartie variable horizontale, kN/m" },
+    "charge_permanente_ponctuelle_y_kN": { "address": "G24", "description": "G(Fy), charge ponctuelle permanente horizontale, kN" },
+    "charge_variable_ponctuelle_y_kN":   { "address": "G25", "description": "Q(Fy), charge ponctuelle variable horizontale, kN" },
+    "position_ponctuelle_permanente_y_m": { "address": "H24", "description": "Position x (m) de la charge ponctuelle permanente horizontale" },
+    "position_ponctuelle_variable_y_m":   { "address": "H25", "description": "Position x (m) de la charge ponctuelle variable horizontale" },
+
+    "position_charge_ponctuelle": {
+      "address": "M20",
+      "valueMap": {"gauche": "1. Gauche", "milieu": "2. Milieu", "droite": "3. Droite"},
+      "description": "Categorie de position utilisee pour le facteur de moment (tableau B.3) : gauche / milieu / droite"
+    },
+    "repartition_charge": {
+      "address": "P35",
+      "valueMap": {"uniforme": "U", "concentree": "C", "noeuds_deplacables": "N"},
+      "description": "Type de repartition pour le facteur Cmy/Cmz (tableau B.3) : uniforme / concentree / noeuds_deplacables"
+    },
+    "sensible_deformation_torsion": {
+      "address": "P36",
+      "description": "oui / non - sensibilite aux deformations par torsion (§6.3.3)"
+    },
+    "facteur_k_deversement": {
+      "address": "P30",
+      "description": "Avance/optionnel : facteur k (longueur effective, annexe F p. F-2), saisie manuelle."
+    },
+    "facteur_kw_deversement": {
+      "address": "P31",
+      "description": "Avance/optionnel : facteur kw (gauchissement, annexe F p. F-2), saisie manuelle."
+    },
+    "facteur_C1_deversement": {
+      "address": "P32",
+      "description": "Avance/optionnel : facteur C1 (annexe F), saisie manuelle par defaut (lecture d'abaque). A verifier a la main pour le cas reel."
+    },
+    "facteur_C2_deversement": {
+      "address": "P33",
+      "description": "Avance/optionnel : facteur C2 (annexe F), saisie manuelle par defaut."
+    },
+
+    "torseur_N_ELU_kN":  { "address": "P22", "description": "Torseur saisi : N,Ed ELU en kN (>0 = traction). P22/Q22 sont des constantes du classeur ; les autres lignes du torseur sont des formules, ecrasees par la saisie." },
+    "torseur_Vz_ELU_kN": { "address": "P23", "description": "Torseur saisi : Vz,Ed ELU en kN (ecrase la formule)" },
+    "torseur_Vy_ELU_kN": { "address": "P24", "description": "Torseur saisi : Vy,Ed ELU en kN (ecrase la formule)" },
+    "torseur_My_ELU_kNm": { "address": "P25", "description": "Torseur saisi : My,Ed ELU en kNm (ecrase la formule)" },
+    "torseur_Mz_ELU_kNm": { "address": "P26", "description": "Torseur saisi : Mz,Ed ELU en kNm (ecrase la formule)" },
+    "torseur_N_ELS_kN":  { "address": "Q22", "description": "Torseur saisi : N,Ed ELS en kN" },
+    "torseur_Vz_ELS_kN": { "address": "Q23", "description": "Torseur saisi : Vz,Ed ELS en kN (ecrase la formule)" },
+    "torseur_Vy_ELS_kN": { "address": "Q24", "description": "Torseur saisi : Vy,Ed ELS en kN (ecrase la formule)" },
+    "torseur_My_ELS_kNm": { "address": "Q25", "description": "Torseur saisi : My,Ed ELS en kNm (ecrase la formule)" },
+    "torseur_Mz_ELS_kNm": { "address": "Q26", "description": "Torseur saisi : Mz,Ed ELS en kNm (ecrase la formule)" },
+
+    "my_debut_kNm":  { "address": "D31", "description": "Distribution de moments (stabilite, facteurs Cm) : My,Ed au debut de la barre, kNm (ecrase la formule)" },
+    "my_milieu_kNm": { "address": "D32", "description": "Distribution : My,Ed a mi-barre, kNm (ecrase la formule)" },
+    "my_fin_kNm":    { "address": "D33", "description": "Distribution : My,Ed a la fin, kNm (ecrase la formule)" },
+    "mz_debut_kNm":  { "address": "D35", "description": "Distribution : Mz,Ed au debut, kNm (ecrase la formule)" },
+    "mz_milieu_kNm": { "address": "D36", "description": "Distribution : Mz,Ed a mi-barre, kNm (ecrase la formule)" },
+    "mz_fin_kNm":    { "address": "D37", "description": "Distribution : Mz,Ed a la fin, kNm (ecrase la formule)" }
+  },
+
+  "outputs": {
+    "taux_fleche": { "address": "L2", "description": "Taux d'utilisation en fleche (§7.2)" },
+    "taux_contrainte": { "address": "L3", "description": "Taux d'utilisation en contrainte (§6.2)" },
+    "taux_stabilite": { "address": "L4", "description": "Taux d'utilisation en stabilite (§6.3) = MAX(X35:X38)" },
+    "taux_flambement": { "address": "X35", "description": "§6.3.1 Flambement barre comprimee (0 si N,Ed > 0 : traction)" },
+    "taux_deversement": { "address": "X36", "description": "§6.3.2 Deversement" },
+    "taux_flechie_comprimee_yy": { "address": "X37", "description": "§6.3.3 Barre flechie et comprimee, eq. [6.61] (plan yy)" },
+    "taux_flechie_comprimee_zz": { "address": "X38", "description": "§6.3.3 Barre flechie et comprimee, eq. [6.62] (plan zz)" },
+    "frequence_propre_Hz": { "address": "L5", "description": "Frequence propre a vide, Hz" },
+
+    "My_Ed_ELU_kNm": { "address": "P25", "description": "Torseur : My,Ed ELU en kNm a la position M20 (mettre position_charge_ponctuelle='milieu' pour le maximum en travee d'une poutre appuyee-appuyee)" },
+    "My_Ed_ELS_kNm": { "address": "Q25", "description": "Torseur : My,Ed ELS en kNm a la position M20" },
+    "Vz_Ed_ELU_kN": { "address": "AS35", "description": "Table interne du torseur : Vz ELU a l'appui gauche, ligne '3. Appuye / Appuye' UNIQUEMENT (le torseur P23 vaut 0 a mi-travee). Ne pas utiliser pour d'autres conditions d'appui." },
+    "Vz_Ed_ELS_kN": { "address": "AS31", "description": "Table interne du torseur : Vz ELS a l'appui gauche, ligne '3. Appuye / Appuye' uniquement." },
+    "fleche_totale_GQ_mm": { "address": "X20", "description": "Fleche totale (G+Q) en mm (§7.2)" },
+    "fleche_nuisible_Q_mm": { "address": "X21", "description": "Fleche nuisible (Q seule) en mm (§7.2)" }
+  }
+}

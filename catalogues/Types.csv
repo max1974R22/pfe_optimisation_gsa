@@ -1,0 +1,273 @@
+﻿num,catalogue,nom,abreviation,obsolete
+1,British,Universal Beams (BS4-1:1980),UB,1
+2,British,Universal Columns (BS4-1:1980),UC,1
+3,British,Joists (BS4-1:1980),UJ,1
+4,British,Univ. Bearing Piles (BS4-1:1980),BP,1
+5,British,Circ. Hollow Sects (BS4848- 2:1991),CHS,1
+6,British,Sq. Hollow Sections (BS4848-2:1991),SHS,1
+7,British,Rect. Hollow Sects (BS4848-2:1991),RHS,1
+8,British,Channels (BS4-1:1980),CH,1
+9,British,Equal Angles (BS4848-4:1972),EA,1
+10,British,Unequal Angles (BS4848-4:1972),UA,1
+11,British,Castellated Ubs (BS4-1:1980),CUB,1
+12,British,BS Castellated UCs,CUC,1
+13,British,BS Castellated Joists,CJ,1
+14,British,UB Tee (BS4-1:1980),TUB,1
+15,British,UC Tee (BS4-1:1980),TUC,1
+26,Europrofile,EP IPE beams,IPE,0
+27,Europrofile,EP HE beams,HE,0
+28,Europrofile,EP HL beams,HL,0
+29,Europrofile,EP HX beams,HX,0
+30,Europrofile,EP HD columns - s/s,HD,1
+31,Europrofile,EP: US HP bearing piles,E-H,0
+32,Europrofile,EP: Japanese I shapes,E-J,0
+33,Europrofile,EP: US I shapes: M,E-M,0
+34,Europrofile,EP: US I shapes: W,E-W,0
+35,AISC,AISC W shapes,W,1
+36,AISC,AISC M shapes,M,1
+37,AISC,AISC S shapes,S,1
+38,AISC,AISC HP shapes,HP,1
+39,AISC,AISC Channels,C,1
+40,AISC,AISC Misc. Channels,MC,1
+41,AISC,AISC W Tee,WT,1
+42,AISC,AISC M Tee,MT,1
+43,AISC,AISC S Tee,ST,1
+44,AISC,AISC Angles,L,1
+45,AISC,AISC Double Angles,LL,1
+46,AISC,AISC Structural Tubing,TS,1
+47,AISC,AISC Pipe (Standard),P,1
+48,AISC,AISC Pipe (Extra str.),PX,1
+49,AISC,AISC Pipe (Dbl.Extra),PXX,1
+50,Europrofile,EP HD columns,HD,0
+51,Australian,Universal Beams,A-UB,0
+52,Australian,Universal Columns,A-UC,0
+53,Australian,Welded Beams,A-WB,0
+54,Australian,Welded Columns,A-WC,0
+55,Australian,Universal Bearing Piles,A-UBP,0
+56,Australian,Taper Flange Beams,A-TFB,0
+57,Australian,Parallel Flange Channels,A-PFC,0
+58,Australian,Equal Angles,A-EA,0
+59,Australian,Unequal Angles,A-UA,0
+66,Australian,Flats,A-FLATS,0
+67,Australian,Rounds,A-ROUNDS,0
+68,Australian,Squares,A-SQUARES,0
+69,Australian,RSJs,A-RSJs,0
+70,British,Universal Beams (BS4-1:2005),UB,1
+71,British,Universal Columns (BS4-1:2005),UC,1
+72,British,Joists (BS4-1:2005),UJ,1
+73,British,Univ. Bearing Piles (BS4-1:2005),BP,1
+74,British,Circ. Hollow Sects (EN10210-2:1997),CHS,1
+75,British,Square Hollow Sects (EN10210-2:1997),SHS,1
+76,British,Rect. Hollow Sects (EN10210-2:1997),RHS,1
+77,British,Channels (BS4-1:1993),CH,1
+78,British,Equal Angles (BS4848-4:1972),EA,1
+79,British,Unequal Angles (BS4848-4:1972),UA,1
+80,British,Castellated UBs (BS4-1:1993),CUB,1
+81,British,Castellated UCs (BS4-1:1993),CUC,1
+82,British,Castellated Joists (BS4-1:1993),CJ,1
+83,British,UB Tee (BS4-1:2005),TUB,1
+84,British,UC Tee (BS4-1:2005),TUC,1
+85,British,Two Channels Laced (BS4-1:1993),2CHL,1
+86,British,Two Channels Back to Back (BS4-1:1993),2CHB2B,1
+87,British,Equal Angles Back2b (BS4848-4:1972),EAB2B,1
+88,British,Unequal Angles Short Back2b (BS4848-4:1972),UASB2B,1
+89,British,Unequal Angles Long Back2b (BS4848-4:1972),UALB2B,1
+90,British,Parallel Flange Channel (BS4-1:2005),PFC,1
+91,British,"Universal Beams (Blue Book, 6th Edition)",UB,1
+92,British,Celsius 355 Ovals (EN10210),OVAL,1
+93,Chinese,Wide Flange Beams (GB/T 11263-1998),HW,0
+94,Chinese,Medium Flange Beams (GB/T 11263-1998),HM,0
+95,Chinese,Narrow Flange Beams (GB/T 11263-1998),HN,0
+96,British,Celsius Large Circular Hollow Sects (EN10210),LCHS,1
+97,Indian,Rolled Steel Equal Angles,ISA,0
+98,Indian,Rolled Steel Unequal Angles,ISA,0
+99,Indian,Rolled Steel Beams: ISJB,ISJB,0
+100,Indian,Rolled Steel Beams: ISLB,ISLB,0
+101,Indian,Rolled Steel Beams: ISMB,ISMB,0
+102,Indian,Rolled Steel Beams: ISWB,ISWB,0
+103,Indian,Rolled Steel Beams: ISHB,ISHB,0
+104,Indian,Rolled Steel Channels: ISJC,ISJC,0
+105,Indian,Rolled Steel Channels: ISLC,ISLC,0
+106,Indian,Rolled Steel Channels: ISMC,ISMC,0
+107,Indian,Rolled Steel Tee Bars: ISNT,ISNT,0
+108,Indian,Rolled Steel Tee Bars: ISHT,ISHT,0
+109,Indian,Rolled Steel Tee Bars: ISST,ISST,0
+110,Indian,Rolled Steel Tee Bars: ISLT,ISLT,0
+111,Indian,Rolled Steel Tee Bars: ISJT,ISJT,0
+112,Corus Advance (TATA),Advance UKB (DRAFT 2006),UKB,1
+113,Corus Advance (TATA),Advance UKC (DRAFT 2006),UKC,1
+114,Corus Advance (TATA),Advance UKBP (DRAFT 2006),UKBP,1
+115,Corus Advance (TATA),Advance UKPFC (DRAFT 2006),UKPFC,1
+116,Corus Advance (TATA),Advance UKA - Equal (DRAFT 2006),UKA,1
+117,Corus Advance (TATA),Advance UKA - Unequal (DRAFT 2006),UKA,1
+118,Corus Advance (TATA),Advance UKT split from UKB (DRAFT 2006),UKT,1
+119,Corus Advance (TATA),Advance UKT split from UKC (DRAFT 2006),UKT,1
+120,Australian,Circ Hollow (G250),A-CHS250,0
+121,Australian,Circ Hollow (G350),A-CHS350,0
+122,Australian,Rect Hollow (G350),A-RHS350,0
+123,Australian,Rect Hollow (G450),A-RHS450,0
+124,Australian,Square Hollow (G350),A-SHS350,0
+125,Australian,Square Hollow (G450),A-SHS450,0
+126,AISC,AISC W shapes (v13.1: 2005),W,0
+127,AISC,AISC M shapes (v13.1: 2005),M,0
+128,AISC,AISC S shapes (v13.1: 2005),S,0
+129,AISC,AISC HP shapes (v13.1: 2005),HP,0
+130,AISC,AISC Channels (v13.1: 2005),C,0
+131,AISC,AISC Misc. Channels (v13.1: 2005),MC,0
+132,AISC,AISC Angles (v13.1: 2005),L,0
+133,AISC,AISC W Tee (v13.1: 2005),WT,0
+134,AISC,AISC M Tee (v13.1: 2005),MT,0
+135,AISC,AISC S Tee (v13.1: 2005),ST,0
+136,AISC,AISC Double Angles (v13.1: 2005),2L,0
+137,AISC,AISC Rectangular Hollow Sections-ASTM A500 (v13.1: 2005),HSS-R,0
+138,AISC,AISC Circular Hollow Sections-ASTM A500 (v13.1: 2005),HSS-C,0
+139,AISC,AISC Pipe (Standard)-ASTM A53 (v13.1: 2005),P,0
+140,AISC,AISC Pipe (Extra str.)-ASTM A53 (v13.1: 2005),PX,0
+141,AISC,AISC Pipe (Dbl.Extra)-ASTM A53 (v13.1: 2005),PXX,0
+142,Russian,Regular I-beams (STO ASChM 20-93),RU-B,0
+143,Russian,Broad-flanged I-beams (STO ASChM 20-93),RU-W,0
+144,Russian,Column I-beams (STO ASChM 20-93),RU-C,0
+145,Russian,Channels (GOST 8240-97),RU-CH,0
+146,Russian,Equal Angles (GOST 8510-83),RU-EA,0
+147,Russian,Unequal Angles (GOST 8510-83),RU-UA,0
+148,Russian,Sq. Hollow Sections (GOST 30245-2003),RU-SHS,0
+149,Russian,Rect. Hollow Sections(GOST 30245-2003),RU-RHS,0
+150,Russian,Circ. Hollow Sects (GOST 8732-78),RU-CHS,0
+151,Korean,Wide Flange Shapes,KR-W,0
+152,Korean,H-Bearing Piles,KR-HBP,0
+153,Korean,Junior Beams,KR-JB,0
+154,Korean,I-Beams,KR-IB,0
+155,Korean,I Beams for Mine Support,KR-IBMS,0
+156,Korean,Channel Sections,KR-C,0
+157,Korean,Parallel Flange Channel Sections,KR-CPF,0
+158,Korean,Structural Tees,KR-T,0
+159,Korean,Equal Angle Sections,KR-EA,0
+160,Korean,Unequal Angle Sections,KR-UA,0
+161,Korean,Inverted Angle Sections,KR-IA,0
+162,Russian,Circ. Hollow Sects (GOST 10704-91),RU-CHSw,0
+163,Russian,Parallel Flange Channels (GOST 8240-97),RU-CH-P,0
+164,Russian,Efficient Parallel Flange Channels (GOST 8240-97),RU-CH-E,0
+165,Russian,Light Parallel Flange Channels (GOST 8240-97),RU-CH-L,0
+166,Corus Advance (TATA),Advance UKB,UKB,1
+167,Corus Advance (TATA),Advance UKC,UKC,1
+168,Corus Advance (TATA),Advance UKBP,UKBP,1
+169,Corus Advance (TATA),Advance UKPFC,UKPFC,1
+170,Corus Advance (TATA),Advance UKA - Equal,UKA,1
+171,Corus Advance (TATA),Advance UKA - Unequal,UKA,1
+172,Corus Advance (TATA),Advance UKT split from UKB,UKT,1
+173,Corus Advance (TATA),Advance UKT split from UKC,UKT,1
+174,Japanese,Hyper Beams,HY,0
+175,Japanese,Conv. H-Shapes (Heavy weight - 500mm Series),JP-HW,0
+176,Japanese,Conv. H-Shapes (Heavy weight - 400mm Series),JP-HW,0
+177,Japanese,Conv. H-Shapes (Lightweight - Wide),JP-LW,0
+178,Japanese,Conv. H-Shapes (Lightweight - Medium),JP-LM,0
+179,Japanese,Conv. H-Shapes (Lightweight - Narrow),JP-LN,0
+180,Japanese,Square Hollow Sects (JIS G 3466),JP-SHS,0
+181,Japanese,Rect. Hollow Sects (JIS G 3466),JP-RHS,0
+182,Japanese,Circ. Hollow Sects (JIS G 3444),JP-CHS,0
+183,Japanese,Circ. Hollow Sects (JIS G 3475-1),JP-CHS,0
+184,Japanese,Circ. Hollow Sects (JIS G 3475-2),JP-CHS,0
+185,Japanese,Equal Angles (JIS G 3192),JP-EA,0
+186,Japanese,Unequal Angles (JIS G 3192),JP-UA,0
+187,EN 10210,CHS (EN10210-2:2006),EN-CHS,0
+188,EN 10210,SHS (EN10210-2:2006),EN-SHS,0
+189,EN 10210,RHS (EN10210-2:2006),EN-RHS,0
+190,EN 10210,EHS (EN10210-2:2006),EN-EHS,0
+191,EN 10210,Celsius 355 CHS (EN10210-2:2006) - Corus,EN-CCHS,0
+192,EN 10210,Celsius LCHS (EN10210-2:2006) - Corus,EN-CLCHS,0
+193,EN 10210,Celsius OVAL (EN10210-2:2006) - Corus,EN-COVAL,0
+194,EN 10210,Celsius 355 SHS (EN10210-2:2006) - Corus,EN-CSHS,0
+195,EN 10210,Celsius 355 RHS (EN10210-2:2006) - Corus,EN-CRHS,0
+196,EN 10219,Hybox 355 CHS (EN10219:2006) - Corus,EN-HCHS,0
+197,EN 10219,Hybox 355 SHS (EN10219:2006) - Corus,EN-HSHS,0
+198,EN 10219,Hybox 355 RHS (EN10219:2006) - Corus,EN-HRHS,0
+199,EN 10219,Strongbox 235 CHS (EN10219:2006) - Corus,EN-SCHS,0
+200,EN 10219,Strongbox 235 SHS (EN10219:2006) - Corus,EN-SSHS,0
+201,EN 10219,Strongbox 235 RHS (EN10219:2006) - Corus,EN-SRHS,0
+202,Corus Advance (TATA),Advance UKB,UKB,1
+203,Corus Advance (TATA),Advance UKC,UKC,1
+204,Corus Advance (TATA),Advance UKBP,UKBP,1
+205,Corus Advance (TATA),Advance UKPFC,UKPFC,1
+206,Corus Advance (TATA),Advance UKA - Equal,UKA,1
+207,Corus Advance (TATA),Advance UKA - Unequal,UKA,1
+208,Corus Advance (TATA),Advance UKT split from UKB,UKT,1
+209,Corus Advance (TATA),Advance UKT split from UKC,UKT,1
+210,South African,Universal Beams (BS4: Part 1 : 1993),SA-UB,0
+211,South African,IPE Sections (DIN 1025 : 1965),SA-IPE,0
+212,South African,IPE-AA Sections (Internal Spec SPE 230),SA-IPE-AA,0
+213,South African,Universal Columns (BS4: Part 1 : 1993),SA-UC,0
+214,South African,Taper Flange Channels (BS4: Part 1 : 1993),SA-TFC,0
+215,South African,Parallel Flange Channels (EN 10279),SA-PFC,0
+216,South African,Equal Angles (EN 10056),SA-EA,0
+217,South African,Unequal Angles (EN 10056),SA-UA,0
+218,South African,Rectangular Hollow Sections (ISO 657-14),SA-RHS,0
+219,South African,Square Hollow Sections (ISO 657-14),SA-SHS,0
+220,South African,Circular Hollow Sections (ISO 657-14),SA-CHS,0
+221,ASTM A501,Celsius Rectangular HSS (EN10210-2:2006)- Corus,UA-HSSR,0
+222,ASTM A501,Celsius Square HSS (EN10210-2:2006)- Corus,UA-HSSS,0
+223,ASTM A501,Celsius Circular HSS (EN10210-2:2006)- Corus,UA-HSSC,0
+224,CISC,CISC W Shapes,CA-W,0
+225,CISC,CISC S Shapes,CA-S,False
+226,CISC,CISC M Shapes,CA-M,False
+227,CISC,CISC HP Shapes,CA-HP,False
+228,CISC,CISC WWF Shapes,CA-WWF,False
+229,CISC,CISC Channels Section,CA-C,False
+230,CISC,CISC Miscellaneous Channels,CA-MC,False
+231,CISC,CISC Single Angle,CA-L,False
+232,CISC,CISC Angle Back to Back,CA-2L,False
+233,CISC,CISC WT Shapes,CA-WT,False
+234,CISC,CISC WWT Shapes,CA-WWT,False
+235,CISC,CISC SLB Section,CA-SLB,False
+236,CISC,CISC Rect HSS (G40),CA-RHS,False
+237,CISC,CISC Square HSS (G40),CA-SHS,False
+238,CISC,CISC Circ. HSS (G40),CA-CHS,False
+239,CISC,CISC Rect HSS (ASTM A500),CA-RHS,False
+240,CISC,CISC Square HSS (ASTM A500),CA-SHS,False
+241,CISC,CISC Circ. HSS (ASTM A500),CA-CHS,False
+242,British Steel,Universal Beam(UB),BS-UB,FALSE
+243,British Steel,Universal Columns (UC),BS-UC,FALSE
+244,British Steel,Universal Bearing Piles (UBP),BS-UBP,FALSE
+245,British Steel,Parallel Flange Channels (PFC),BS-PFC,FALSE
+246,British Steel,Equal Angles (EA),BS-EA,FALSE
+247,British Steel,Unequal Angles (UA),BS-UA,FALSE
+248,British,Parallel flange I sections(IPE) - EN10365:2017,BSI-IPE,0
+249,British,Wide flange beams(HE) - EN10365:2017,BSI-HE,0
+250,British,Extra wide flange beams(HL) - EN10365:2017,BSI-HL,0
+251,British,Extra wide flange beams(HLZ) - EN10365:2017,BSI-HLZ,0
+252,British,Wide flange columns(HD) - EN10365:2017,BSI-HD,0
+253,British,Wide flange bearing piles(HP) - EN10365:2017,BSI-HP,0
+254,British,Wide flange bearing piles(UBP) - EN10365:2017,BSI-UBP,0
+255,British,Universal beams(UB) - EN10365:2017,BSI-UB,0
+256,British,Universal columns(UC) - EN10365:2017,BSI-UC,0
+257,British,Taper flange I sections(IPN) - EN10365:2017,BSI-IPN,0
+258,British,Taper flange I sections(J) - EN10365:2017,BSI-J,0
+259,British,Parallel flange channels(UPE) - EN10365:2017,BSI-UPE,0
+260,British,Parallel flange channels(PFC) - EN10365:2017,BSI-PFC,0
+261,British,Taper flange channels(UPN) - EN10365:2017,BSI-UPN,0
+262,British,Taper flange channels(U) - EN10365:2017,BSI-U,0
+263,British,Taper flange channels(CH) - EN10365:2017,BSI-CH,0
+264,ArcelorMittal,AM Parallel flange I section(IPE),IPE-AM,0
+265,ArcelorMittal,AM Wide flange beams(HE),HE-AM,0
+266,ArcelorMittal,AM Extra wide flange beams(HL),HL-AM,0
+267,ArcelorMittal,AM Extra wide flange beams-HLZ,HLZ-AM,0
+268,ArcelorMittal,AM Wide flange beams(HD),HD-AM,0
+269,ArcelorMittal,AM Wide flange bearing piles(HP),HP-AM,0
+270,ArcelorMittal,AM Wide flange bearing piles(UBP),UBP-AM,0
+271,ArcelorMittal,AM Universal beams(UB),UB-AM,0
+272,ArcelorMittal,AM Universal Columns(UC),UC-AM,0
+273,ArcelorMittal,AM American wide flange beams(W),W-AM,0
+274,ArcelorMittal,AM Americal wide flange bearing piles(HP),HP-AM,0
+275,ArcelorMittal,AM Russian hot rolled beams(HG),HG-AM,0
+276,ArcelorMittal,AM Parallel flange channels(UPE),UPE-AM,0
+277,ArcelorMittal,AM Parallel flange channels(PFC),PFC-AM,0
+278,ArcelorMittal,AM Taper flange channels(UPN),UPN-AM,0
+279,ArcelorMittal,AM Taper flange channels(UE),UE-AM,0
+280,ArcelorMittal,AM American standard channels(C),C-AM,0
+281,ArcelorMittal,AM American channels(MC),MC-AM,0
+282,ArcelorMittal,AM Equal leg angles(L),EA-AM,0
+283,ArcelorMittal,AM American equal leg angles(L),AEA-AM,0
+284,ArcelorMittal,AM Unequal leg angles(L),UEA-AM,0
+285,ArcelorMittal,AM American Unequal leg angles(L),AUEA-AM,0
+286,ArcelorMittal,AM Taper flange I sections(IPN),IPN-AM,0
+287,ArcelorMittal,AM Taper flange I sections(J),J-AM,0
+288,ArcelorMittal,AM American standard beams(S),S-AM,0

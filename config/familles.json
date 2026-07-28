@@ -1,0 +1,6 @@
+{
+  "_commentaire": "Familles de sections proposees au dimensionnement (interface web et scripts). catalogue = CSV exporte par excel_bridge/scripts/injecter_sections_gsa.py (a partir des catalogues GSA bruts EN-RHS/EN-SHS/HE-AM, catalogues/extract_catalogues.py) ; regex = filtre de la serie standard (variantes AA/O/V exclues). HE regroupe HEA/HEB/HEM en une seule famille (l'algo escalade peut monter d'echelon A->B->M). RHS regroupe les tubes rectangulaires ET carres (EN-SHS, designations 'SHS...' conservees telles quelles cote GSA) : SHS n'a pas d'onglet dedie dans le classeur Predim, ses tailles sont verifiees via l'onglet RHS (traduction de prefixe, cf. app/server.py::_profil_predim). Ce sont EXACTEMENT les memes sections que celles injectees dans reference/excels/Predim_poutre acier_v3_GSA.xlsm (cf. excel_bridge/config/io_map.json) : toute section essayee par l'optimiseur est donc verifiable en stabilite EC3. CHS n'est plus une famille d'optimisation (catalogues/CHS.csv, ancien, non touche par ce changement).",
+
+  "HE":  { "catalogue": "catalogues/HE.csv",  "regex": "HE\\d+[ABM]" },
+  "RHS": { "catalogue": "catalogues/RHS.csv", "regex": "(RHS|SHS)\\d+(\\.\\d+)?x\\d+(\\.\\d+)?x\\d+(\\.\\d+)?" }
+}

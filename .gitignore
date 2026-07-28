@@ -1,0 +1,20 @@
+# Environnement Python
+venv/
+__pycache__/
+*.pyc
+
+# Sorties générées / régénérables
+result/
+optimisations/
+gsa_bridge/runtime/
+excel_bridge/runtime/
+excel_bridge/results/
+
+# Tableau brut régénérable (78 Mo, cf. tests/README.md) — on garde le reste de tests/resultats/
+tests/resultats/canopee_elu_permutations.csv
+
+# Config locale (non partagée)
+.claude/settings.local.json
+
+# Éditeur
+.vscode/
