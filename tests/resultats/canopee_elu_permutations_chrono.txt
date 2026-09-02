@@ -1,9 +1,0 @@
-Chronometrage
-============================================================
-      1.04 s  ouverture du modele (Canopée - Modèle de Vent.gwb)
-     14.69 s  analyse (toutes les taches)
-      0.04 s  lecture des tables du modele
-      0.08 s  sondage des permutations sur la barre 106
-     17.08 s  extraction + ecriture (3285 lignes)
-------------------------------------------------------------
-     33.07 s  TOTAL
