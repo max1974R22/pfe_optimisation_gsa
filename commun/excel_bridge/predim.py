@@ -20,11 +20,11 @@ import tempfile
 import time
 from pathlib import Path
 
-from excel_bridge.bridge import (BeamWorkbook, load_json, merge_with_defaults,
-                                 new_working_copy)
+from commun.excel_bridge.bridge import (BeamWorkbook, load_json, merge_with_defaults,
+                                        new_working_copy)
 
 PKG = Path(__file__).resolve().parent
-ROOT = PKG.parent
+ROOT = PKG.parent.parent
 IO_MAP = PKG / "config" / "io_map.json"
 DEFAUTS = PKG / "config" / "defaults.json"
 # HORS OneDrive impérativement : le projet est synchronisé, et OneDrive
@@ -50,14 +50,16 @@ def famille_predim(famille: str) -> str:
     return onglet
 
 
-def ouvrir_predim(donnees: dict, etiquette: str = "predim") -> Path:
+def ouvrir_predim(donnees: dict, etiquette: str = "predim") -> tuple[Path, str | None]:
     """Copie le classeur maitre, le remplit avec `donnees` (cles de
     io_map.json + profil_famille/profil_nom) et le laisse ouvert dans une
-    instance Excel visible. Renvoie le chemin de la copie de travail.
+    instance Excel visible. Renvoie (chemin de la copie de travail, designation
+    de REPLI utilisee si la section demandee etait absente de l'onglet Predim
+    — cf. `BeamWorkbook.resolve_profile_index` —, sinon None).
 
-    En cas d'echec de saisie (ex. profil absent de l'onglet), Excel est
-    referme et l'exception propagee : on ne rend pas a l'utilisateur un
-    classeur a moitie rempli.
+    En cas d'echec de saisie (ex. profil absent de l'onglet ET du catalogue,
+    aucun repli possible), Excel est referme et l'exception propagee : on ne
+    rend pas a l'utilisateur un classeur a moitie rempli.
     """
     # Les handlers HTTP appellent depuis des threads quelconques : l'apartment
     # COM du thread doit etre initialise avant tout usage de xlwings.
@@ -74,7 +76,7 @@ def ouvrir_predim(donnees: dict, etiquette: str = "predim") -> Path:
     wb = BeamWorkbook(copie, io_map["sheet"], visible=True)
     wb.open()
     try:
-        wb.set_inputs(io_map, merge_with_defaults(defauts, donnees))
+        profil_substitue = wb.set_inputs(io_map, merge_with_defaults(defauts, donnees))
         wb.recalc()
         # rendre la main a l'utilisateur : Excel redevient interactif
         wb.app.calculation = "automatic"
@@ -84,4 +86,4 @@ def ouvrir_predim(donnees: dict, etiquette: str = "predim") -> Path:
     except Exception:
         wb.close()
         raise
-    return copie
+    return copie, profil_substitue

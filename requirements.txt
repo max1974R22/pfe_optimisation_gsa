@@ -1,3 +1,8 @@
 xlwings>=0.31
 pywin32>=306
 pythonnet>=3.1
+# calcul matriciel des taux EC3 par permutation (app/ et tests/)
+numpy>=2.0
+# images des cartes barres x permutations (tests/canopee_elu_matrice.py
+# seulement : l'app encode ses PNG avec zlib, cf. app/png_gris.py)
+matplotlib>=3.8

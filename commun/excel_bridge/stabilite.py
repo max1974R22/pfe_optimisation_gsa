@@ -24,11 +24,11 @@ import time
 import uuid
 from pathlib import Path
 
-from excel_bridge.bridge import (BeamWorkbook, load_json, merge_with_defaults,
-                                 new_working_copy)
+from commun.excel_bridge.bridge import (BeamWorkbook, load_json, merge_with_defaults,
+                                        new_working_copy)
 
 PKG = Path(__file__).resolve().parent
-ROOT = PKG.parent
+ROOT = PKG.parent.parent
 IO_MAP = PKG / "config" / "io_map.json"
 DEFAUTS = PKG / "config" / "defaults.json"
 COPIES = Path(os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()) / "PredimGSA"
@@ -83,25 +83,40 @@ class SessionStabilite:
         return self
 
     def verifier(self, barre: dict) -> dict:
-        """Verifie une barre et renvoie {element, taux_stabilite, cas, taux} ou
-        {element, erreur}. `barre` : dict d'entrees du classeur + `element`."""
+        """Verifie une barre et renvoie {element, taux_stabilite, cas, taux,
+        classe, profil_substitue?} ou {element, erreur}. `barre` : dict
+        d'entrees du classeur + `element`. `profil_substitue`, si present,
+        signale que la section demandee etait absente de l'onglet Predim et
+        que le taux porte donc sur la section EXISTANTE superieure indiquee
+        (repli conservatif, cf. `BeamWorkbook.resolve_profile_index`) — le
+        taux est alors probablement SOUS-estime par rapport a la section
+        reelle. `classe` : classe de section EC3 (§5.5, table 5.2), 1 a 4,
+        lue dans le classeur (plage nommee `classe`, MAX(classe yy, classe
+        zz)) — memes entrees (profil/nuance/torseur) que la stabilite, donc
+        valable pour la MEME section et le MEME point que `taux_stabilite`."""
         eid = barre.get("element")
         donnees = {k: v for k, v in barre.items() if k != "element"}
         try:
-            self.wb.set_inputs(self.io_map, merge_with_defaults(self.defauts, donnees))
+            profil_substitue = self.wb.set_inputs(
+                self.io_map, merge_with_defaults(self.defauts, donnees))
             self.wb.recalc()
             sortie = self.wb.get_outputs(self.io_map)
             taux = {k: _nombre(sortie.get(k)) for k in self._sorties}
+            classe = _nombre(sortie.get("classe"))
             valides = {k: v for k, v in taux.items() if v is not None}
             if valides:
                 cle = max(valides, key=lambda k: valides[k])
-                return {
+                r = {
                     "element": eid,
                     "taux_stabilite": round(valides[cle], 3),
                     "cas": CAS_STABILITE[cle],
                     "taux": {CAS_STABILITE[k]: (round(v, 3) if v is not None else None)
                              for k, v in taux.items()},
+                    "classe": int(classe) if classe is not None else None,
                 }
+                if profil_substitue:
+                    r["profil_substitue"] = profil_substitue
+                return r
             return {"element": eid, "erreur": "aucun taux de stabilité lisible"}
         except Exception as e:                                  # noqa: BLE001
             return {"element": eid, "erreur": str(e)}

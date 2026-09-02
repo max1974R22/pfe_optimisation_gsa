@@ -2,8 +2,8 @@
 """
 Dimensionnement de la poutre ISO par le modele GSA SEUL.
 
-Hypothese : le modele possede deux combinaisons nommees ELU et ELS (noms
-configurables). Les criteres sont lus dans config/dimensionnement.json :
+Hypothese : le modele possede une combinaison ELU et une combinaison ELS
+(noms configurables). Les criteres sont lus dans config/dimensionnement.json :
 
     contrainte (ELU) : sigma <= coefficient x fy (defaut 0.90 x 235 MPa), ou
                        sigma est LA PLUS GRANDE AMPLITUDE (max signe / min
@@ -13,31 +13,39 @@ configurables). Les criteres sont lus dans config/dimensionnement.json :
                        MESURES_ELU ; cle "mesures" pour restreindre). Chaque
                        ligne porte le max signe, le min signe et la mesure
                        gouvernante de chacun.
-    fleche (ELS)     : |Uz_max|  <=  L / denominateur
-                       (defaut : L/300 ; L = distance entre appuis, lue
-                        dans le modele)
+    service (ELS)    : criteres NODAUX declares DANS LE MODELE par le nom des
+                       noeuds (cf. commun/els_noeuds.py) — 'ELS_glob_X' pour un
+                       deplacement absolu, 'ELS_3pts_X' pour l'ecart d'un point
+                       a la corde de ses deux voisins. Chacun compare un
+                       deplacement (dans la direction choisie) a une limite en
+                       millimetres, sous la combinaison ELS. Le taux ELS retenu
+                       est le MAX de tous les criteres ; la ligne de resultat
+                       porte le detail de chacun (cf. `els_par_critere`).
+                       Un modele sans noeud nomme ELS_* n'a aucune exigence de
+                       service : le taux ELS est alors None, pas zero.
 
 Parcours DECROISSANT de la serie de sections (ex. IPE600 -> IPE80) : on
 diminue la section tant que les deux criteres restent satisfaits, et on
 s'arrete a la premiere section qui depasse (les criteres sont monotones
 vis-a-vis de la taille). La section RETENUE est la plus petite qui passe.
 Pour chaque section essayee : swap du profil (copie de travail uniquement),
-re-analyse GSA, extraction de My (ELU) et Uz (ELS).
+re-analyse GSA, extraction des contraintes (ELU) et des deplacements des
+noeuds nommes (ELS).
 
 La logique est exposee en fonctions (`dimensionner`, `serie_sections`...)
-pour etre reutilisee par l'interface web (app/server.py). Les algorithmes
+pour etre reutilisee par l'interface web (app_old/server.py). Les algorithmes
 d'optimisation de la STRUCTURE GLOBALE (une section par famille de barres)
-vivent dans le dossier algo_opti/ (l'ancien `optimiser_global` est devenu
-algo_opti/brut_force.py) et reutilisent les briques de ce module.
+vivent dans le dossier commun/algo_opti/ (l'ancien `optimiser_global` est devenu
+commun/algo_opti/brut_force.py) et reutilisent les briques de ce module.
 
 Sorties CLI :
-    - tableau console : section, sigma, taux ELU, fleche, taux ELS, verdict ;
+    - tableau console : section, sigma, taux ELU, deplacement, taux ELS, verdict ;
     - result/dimensionnement/Dimensionnement.csv (le meme tableau) ;
     - la section retenue, rappelee en fin d'execution.
 
 Usage :
-    venv\\Scripts\\python.exe scripts\\dimensionner.py
-    venv\\Scripts\\python.exe scripts\\dimensionner.py --config autre.json
+    venv\\Scripts\\python.exe commun\\dimensionner.py
+    venv\\Scripts\\python.exe commun\\dimensionner.py --config autre.json
 """
 from __future__ import annotations
 
@@ -53,7 +61,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from gsa_bridge.bridge import GsaModel, ConfigurationAnalyseError
+from commun.catalogues import charger_catalogue
+from commun.els_noeuds import (appliquer_reglages, criteres_du_modele,
+                               evaluer as evaluer_els, reglages_config,
+                               taux_max as taux_els_max)
+from commun.gsa_bridge.bridge import GsaModel, ConfigurationAnalyseError
 
 CONFIG_DEFAUT = ROOT / "config" / "dimensionnement.json"
 SORTIE = ROOT / "result" / "dimensionnement" / "Dimensionnement.csv"
@@ -122,17 +134,14 @@ def serie_sections(cfg: dict) -> list[dict]:
     depasse cette limite. cfg["epaisseur_max_mm"] (optionnel) : exclut celles
     dont l'epaisseur (colonne `tf_m` — flanc HE — ou `tw_m` — paroi RHS/SHS,
     en mm) depasse cette limite. Repere de conception usuel de depart (algo
-    escalade, cf. algo_opti/escalade.py) : hauteur ~ longueur de barre / 20,
+    escalade, cf. commun/algo_opti/escalade.py) : hauteur ~ longueur de barre / 20,
     epaisseur minimale — ces plafonds bornent l'ensemble de la recherche pour
     tous les algorithmes (pas seulement escalade)."""
-    catalogue = ROOT / cfg["catalogue"]
-    if not catalogue.exists():
-        raise DimensionnementError(
-            f"Catalogue introuvable : {catalogue} "
-            "(lancer catalogues/extract_catalogues.py)")
-    with catalogue.open(encoding="utf-8-sig") as f:
-        rows = [r for r in csv.DictReader(f)
+    try:
+        rows = [r for r in charger_catalogue(cfg["feuille"])
                 if re.fullmatch(cfg["serie_regex"], r["nom"])]
+    except (FileNotFoundError, ValueError) as e:
+        raise DimensionnementError(str(e)) from e
     hmax = cfg.get("hauteur_max_m")
     if hmax:
         rows = [r for r in rows if not r.get("h_m") or float(r["h_m"]) <= hmax]
@@ -191,6 +200,31 @@ def max_abs_element(rows: list[dict], colonne: str) -> tuple[float, int | None]:
         if not math.isnan(r[colonne]) and abs(r[colonne]) >= val:
             val, elem = abs(r[colonne]), r["element"]
     return val, elem
+
+
+def criteres_els(m: GsaModel, cfg: dict) -> list[dict]:
+    """Criteres ELS du modele (decouverts par les NOMS de ses noeuds, cf.
+    commun/els_noeuds.py), regles par cfg["critere_els"] : direction comparee
+    et limite en mm, par nom de critere.
+
+    Liste vide si le modele ne nomme aucun noeud ELS_* — ce n'est pas une
+    erreur : le dimensionnement se fait alors sur le seul ELU."""
+    reglages, defauts = reglages_config(cfg)
+    return appliquer_reglages(criteres_du_modele(m), reglages, defauts)
+
+
+def taux_els(m: GsaModel, ref_els: str, criteres: list[dict],
+             libelles: list[str] | None = None) -> tuple[float | None, dict | None, list[dict]]:
+    """(taux ELS retenu, critere gouvernant, detail par critere) sous la
+    combinaison `ref_els` ('C2').
+
+    Le taux retenu est le MAX de tous les criteres verifiables ; il vaut None
+    — et non zero — quand aucun ne l'est (modele sans noeud nomme, ou sans
+    resultat exploitable sur ces noeuds), pour qu'un appelant ne prenne jamais
+    l'absence de critere pour un critere satisfait de justesse."""
+    lignes = evaluer_els(m._result(ref_els), criteres, libelles)
+    taux, gouvernant = taux_els_max(lignes)
+    return taux, gouvernant, lignes
 
 
 def extremes_mesures(tables: dict, mesures: list[str]) -> dict:
@@ -322,92 +356,18 @@ def _torseur_barre(rows: list[dict]) -> dict:
             "my_debut_milieu_fin": dmf(my), "mz_debut_milieu_fin": dmf(mz)}
 
 
-def contrainte_combinee(rows: list[dict], aire, wel_y, wel_z) -> dict:
-    """SEULE implementation de la contrainte combinee C1/C2 — partagee par
-    l'optimisation globale (algo_opti/_commun.py::evaluer_etat) et l'onglet
-    Performances (app/server.py::_perf_ligne) : les deux DOIVENT calculer
-    exactement la meme chose, donc appellent cette fonction plutot que de
-    reimplementer la formule chacun de leur cote.
-
-    C1 (A+B, max signe) / C2 (A-B, min signe), calculees DIRECTEMENT depuis
-    les efforts (Fx, Myy, Mzz de `beam_forces`/`member_forces`) plutot que
-    les tables de contraintes GSA (beam_stresses/beam_derived_stresses —
-    plusieurs appels couteux, cf. `dimensionner()` qui les utilise, elle,
-    pour les AUTRES mesures — von Mises, cisaillements... — indisponibles
-    depuis les seuls efforts).
-
-    A = N/aire (contrainte axiale), B = |My|/Wel_y + |Mz|/Wel_z (flexion
-    bi-axiale cumulee, cas le plus defavorable des fibres). C1 = A+B
-    (traction/fibre tendue gouvernante), C2 = A-B (compression/fibre
-    comprimee gouvernante) — memes conventions que la colonne C1/C2 des
-    tables de contraintes GSA.
-
-    Calculee LIGNE PAR LIGNE (meme position/permutation pour N, My et Mz :
-    combiner l'extreme de chaque composante prise separement — a des
-    positions/permutations differentes — ne serait pas physique), puis
-    reduite au max (C1) / min (C2) sur toutes les lignes fournies.
-
-    `rows` : lignes beam_forces/member_forces (Fx, Myy, Mzz, "element"),
-    deja filtrees a la cible voulue (une barre, une famille, une position...).
-    `aire`/`wel_y`/`wel_z` : caracteristiques de LA section actuellement
-    affectee a cette cible (aire_m2, Wel_y_m3/Zy_m3, Wel_z_m3/Zz_m3 — accepte
-    aussi bien des floats (sections GSA) que des chaines (catalogue CSV)).
-
-    Renvoie {"c1", "c2", "element_c1", "element_c2"} en PASCAL (Pa) — None
-    si les lignes ou la section manquent. `element_c1`/`element_c2` designent
-    la barre ou l'extreme se produit (utile pour une famille de plusieurs
-    barres ; sans objet — mais sans danger — pour une seule barre)."""
-    aire = float(aire) if aire else None
-    wel_y = float(wel_y) if wel_y else None
-    wel_z = float(wel_z) if wel_z else None
-    if not rows or not aire or not wel_y or not wel_z:
-        return {"c1": None, "c2": None, "element_c1": None, "element_c2": None}
-    c1 = c2 = None
-    elem_c1 = elem_c2 = None
-    for r in rows:
-        n, my, mz = r["Fx"], r["Myy"], r["Mzz"]
-        if any(isinstance(v, float) and math.isnan(v) for v in (n, my, mz)):
-            continue
-        a = n / aire
-        b = abs(my) / wel_y + abs(mz) / wel_z
-        v1, v2 = a + b, a - b
-        if c1 is None or v1 > c1:
-            c1, elem_c1 = v1, r.get("element")
-        if c2 is None or v2 < c2:
-            c2, elem_c2 = v2, r.get("element")
-    return {"c1": c1, "c2": c2, "element_c1": elem_c1, "element_c2": elem_c2}
-
-
-def amplitude_c1_c2(cc: dict) -> tuple[float, int | None]:
-    """Amplitude ELU gouvernante (max(|C1|, |C2|), en Pa) + la barre qui la
-    porte, depuis le dict renvoye par `contrainte_combinee` — SEULE
-    implementation de cette reduction, partagee pour la meme raison (cf.
-    `contrainte_combinee`).
-
-    Comme C1 >= C2 toujours (C1 - C2 = 2B >= 0), max(|C1|, |C2|) vaut
-    exactement max(C1, -C2) : pas besoin de comparer les valeurs absolues des
-    deux, juste le signe qui les separe. Renvoie (0.0, None) si aucune des
-    deux valeurs n'est disponible (section/lignes manquantes)."""
-    c1, c2 = cc.get("c1"), cc.get("c2")
-    if c1 is None and c2 is None:
-        return 0.0, None
-    c1v, c2v = c1 or 0.0, c2 or 0.0
-    if -c2v >= c1v:
-        return -c2v, cc.get("element_c2")
-    return c1v, cc.get("element_c1")
-
-
 def taux_elu_fy(sigma_Pa: float, fy_Pa: float) -> float:
     """Taux ELU = sigma / fy — SEULE implementation de ce taux, partagee par
     `dimensionner()` (plus bas), l'optimisation globale
-    (algo_opti/_commun.py::construire_ligne) et l'onglet Performances
-    (app/server.py::_perf_ligne), pour qu'un « taux ELU » affiche exactement
+    (commun/algo_opti/_commun.py::construire_ligne) et l'onglet Performances
+    (app_old/server.py::_perf_ligne), pour qu'un « taux ELU » affiche exactement
     la MEME chose partout dans l'application.
 
     `sigma_Pa` : amplitude ELU gouvernante (Pa, max signe / min signe
     confondus — cf. `bilan_extremes` pour la version « toutes mesures GSA »
-    ou `amplitude_c1_c2` pour la version « C1/C2 recalcules depuis les
-    efforts »). Le taux est exprime PAR RAPPORT A fy (la limite elastique),
+    ou `dimensionnant.amplitude_c1_c2`/`permutation_dimensionnante` pour la
+    version « C1/C2 recalcules depuis les efforts »). Le taux est exprime
+    PAR RAPPORT A fy (la limite elastique),
     PAS a la limite admissible (coefficient x fy) : la limite a NE PAS
     depasser est donc le COEFFICIENT du critere (ex. 0.9), pas 1.0 —
     sigma <= coefficient*fy <=> taux <= coefficient. Choix : rester lisible
@@ -427,13 +387,16 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
     via `section_dediee`, le reste du modele garde ses sections). Sans cible :
     comportement historique (1re section du modele, ELU sur tout).
 
-    Le critere ELS (fleche <= L/denominateur) reste GLOBAL dans tous les cas :
-    changer une barre modifie la raideur d'ensemble, c'est bien la fleche de
-    la structure qu'on borne.
+    Les criteres ELS (deplacements des noeuds nommes ELS_glob_X / ELS_3pts_X —
+    cf. module docstring) restent GLOBAUX dans tous les cas : changer une barre
+    modifie la raideur d'ensemble, c'est bien le deplacement des points
+    surveilles de la structure qu'on borne.
 
-    Renvoie {"lignes": [...], "retenue": ligne|None, "portee_m", "fleche_limite_m",
-             "sigma_limite_Pa", "refs": {"ELU": "C1", ...}, "cible": ...}.
-    Chaque ligne porte "element_gouvernant" (barre la plus sollicitee).
+    Renvoie {"lignes": [...], "retenue": ligne|None, "portee_m",
+             "criteres_els": [...], "sigma_limite_Pa",
+             "refs": {"ELU": "C1", ...}, "cible": ...}.
+    Chaque ligne porte "element_gouvernant" (barre la plus sollicitee) et
+    "els_par_critere" (detail par critere : valeur_mm, limite_mm, taux).
     Leve DimensionnementError / ConfigurationAnalyseError si le modele ou la
     config ne permettent pas le calcul.
     """
@@ -442,7 +405,6 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
     sigma_lim = coefficient * fy_Pa
     mesures = valider_mesures(cfg["critere_contrainte"].get("mesures"))
     sources = {MESURES_ELU[mid]["source"] for mid in mesures}
-    denom = cfg["critere_fleche"]["denominateur"]
     positions = cfg.get("positions", 3)
     sections = serie_sections(cfg)
     cible = cfg.get("cible") or {}
@@ -454,7 +416,7 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
         m.check_analysis_setup()
         refs = trouver_combinaisons(m, cfg["combinaisons"])
         L = portee(m)
-        fleche_lim = L / denom
+        criteres_service = criteres_els(m, cfg)
 
         if ids_cible:
             section_id = m.section_dediee(
@@ -478,8 +440,12 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
         base_kg = sum(e["longueur_m"] * aires.get(e["propriete"], 0.0) * rho
                       for e in elements_tous if e["propriete"] != section_id)
 
-        log(f"Portee L = {L:g} m -> fleche limite {fleche_lim * 1000:.1f} mm ; "
-            f"ELU = {refs['ELU']}, ELS = {refs['ELS']} ; "
+        limites_txt = ", ".join(
+            f"{c['nom']} <= {c['limite_mm']:g} mm suivant {c['direction']}"
+            for c in criteres_service if c.get("actif") and not c.get("probleme")
+        ) or "aucun noeud nomme ELS_* dans le modele"
+        log(f"Portee L = {L:g} m ; ELS = {refs['ELS']} -> {limites_txt} ; "
+            f"ELU = {refs['ELU']} ; "
             f"mesures ELU = {', '.join(mesures)} ; "
             + (f"cible = {cible.get('libelle') or ids_cible} ; " if ids_cible else "")
             + f"serie {sections[0]['nom']} -> {sections[-1]['nom']}")
@@ -510,14 +476,16 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
             bilan = bilan_extremes(ext)
             sigma = bilan["sigma"]
 
-            # ELS global : fleche de la structure entiere
-            uz = max_abs(m.beam_displacements(refs["ELS"], positions), "Uz")
+            # ELS global : deplacements des noeuds surveilles de la structure
+            # entiere, tous criteres confondus (cf. module docstring)
+            t_els, gouv_els, els = taux_els(m, refs["ELS"], criteres_service)
             # taux ELU relatif a fy (ex. 235 MPa), pas a sigma_lim : la limite
             # a ne pas depasser est le coefficient du critere (ex. 0.9), pas
             # 1.0 — condition inchangee (sigma <= coefficient*fy <=> taux <= coefficient)
             taux_elu = taux_elu_fy(sigma, fy_Pa)
-            taux_els = uz / fleche_lim
-            ok = taux_elu <= coefficient and taux_els <= 1.0
+            # un modele sans critere ELS verifiable (t_els None) n'est pas
+            # recale pour autant : il n'a simplement aucune exigence de service
+            ok = taux_elu <= coefficient and (t_els is None or t_els <= 1.0)
 
             # torseur ELU de la barre gouvernante, dans l'etat DE CETTE SECTION
             # essayee (la cible porte deja le profil essaye) : sert a la
@@ -555,16 +523,27 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
                        (e["max"] if abs(e["max"]) >= abs(e["min"]) else e["min"]) / 1e6, 2)
                    for mid, e in ext.items()},
                 "taux_ELU": round(taux_elu, 3),
-                "fleche_ELS_mm": round(uz * 1000, 2),
-                "fleche_limite_mm": round(fleche_lim * 1000, 2),
-                "taux_ELS": round(taux_els, 3),
+                "deplacement_ELS_mm": gouv_els["valeur_mm"] if gouv_els else None,
+                "limite_ELS_mm": gouv_els["limite_mm"] if gouv_els else None,
+                "critere_ELS_gouvernant": gouv_els["nom"] if gouv_els else None,
+                "noeud_ELS_gouvernant": gouv_els["noeud"] if gouv_els else None,
+                "els_par_critere": {
+                    l["nom"]: {"valeur_mm": l["valeur_mm"], "limite_mm": l["limite_mm"],
+                               "direction": l["direction"], "noeud": l["noeud"],
+                               "taux": l["taux"]}
+                    for l in els
+                },
+                "taux_ELS": round(t_els, 3) if t_els is not None else None,
                 "verdict": "OK" if ok else "DEPASSE",
                 "barre_gouvernante": barre_gouv,
             })
+            els_txt = (f"[{gouv_els['nom']} noeud {gouv_els['noeud']}] "
+                       f"{gouv_els['valeur_mm']:7.2f} mm (taux {t_els:.3f})"
+                       if gouv_els else "[aucun critere ELS]")
             log(f"{sec['nom']:10s} sigma {sigma / 1e6:7.1f} MPa [{bilan['mesure']}"
                 f"{' barre ' + str(bilan['element']) if ids_cible else ''}] "
                 f"(taux {taux_elu:.3f}) "
-                f"fleche {uz * 1000:7.2f} mm (taux {taux_els:.3f}) "
+                f"deplacement {els_txt} "
                 f"{'OK' if ok else 'DEPASSE'}")
 
             if ok:
@@ -576,7 +555,7 @@ def dimensionner(modele: Path, cfg: dict, log=lambda s: None,
         "lignes": lignes,
         "retenue": retenue,
         "portee_m": L,
-        "fleche_limite_m": fleche_lim,
+        "criteres_els": criteres_service,
         "sigma_limite_Pa": sigma_lim,
         "mesures": mesures,
         "refs": refs,
@@ -599,7 +578,8 @@ def main() -> None:
           f"({cfg['critere_contrainte']['coefficient']:.0%} de "
           f"{cfg['critere_contrainte']['fy_Pa'] / 1e6:.0f} MPa) "
           f"sur {', '.join(valider_mesures(cfg['critere_contrainte'].get('mesures')))} ; "
-          f"fleche <= L/{cfg['critere_fleche']['denominateur']}")
+          "ELS = deplacements des noeuds nommes ELS_glob_X / ELS_3pts_X "
+          "(limites lues dans le modele + config critere_els)")
     t_debut = time.perf_counter()
 
     try:
@@ -609,7 +589,8 @@ def main() -> None:
 
     SORTIE.parent.mkdir(parents=True, exist_ok=True)
     with SORTIE.open("w", newline="", encoding="utf-8-sig") as f:
-        champs = [k for k in res["lignes"][0] if k != "barre_gouvernante"]
+        champs = [k for k in res["lignes"][0]
+                 if k not in ("barre_gouvernante", "els_par_critere")]
         w = csv.DictWriter(f, fieldnames=champs, extrasaction="ignore")
         w.writeheader()
         w.writerows(res["lignes"])
@@ -621,8 +602,9 @@ def main() -> None:
               "(meme la plus grande depasse).")
     else:
         r = res["retenue"]
+        els = "aucun critere" if r["taux_ELS"] is None else f"{r['taux_ELS']:.3f}"
         print(f"=> Section retenue : {r['section']} "
-              f"(taux ELU {r['taux_ELU']:.3f}, taux ELS {r['taux_ELS']:.3f})")
+              f"(taux ELU {r['taux_ELU']:.3f}, taux ELS {els})")
 
 
 if __name__ == "__main__":

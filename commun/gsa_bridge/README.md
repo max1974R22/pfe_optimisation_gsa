@@ -15,7 +15,7 @@ métier. Il ne présuppose rien du modèle (pas seulement une poutre isostatique
 |---|---|
 | `bridge.py` | La classe `GsaModel` : ouverture d'un modèle + méthodes d'extraction brute (données du modèle et résultats). C'est le cœur du dossier. |
 | `dotnet_runtime.py` | Amorçage du runtime .NET pour pouvoir charger `GsaAPI.dll`. **Indispensable** et non trivial — voir ci-dessous. |
-| `__init__.py` | Fait de `gsa_bridge` un package importable (`from gsa_bridge.bridge import GsaModel`). |
+| `__init__.py` | Fait de `gsa_bridge` un package importable (`from commun.gsa_bridge.bridge import GsaModel`). |
 | `runtime/working.gwb` | Copie de travail regénérée à chaque ouverture. Le modèle source n'est **jamais** modifié. Contenu jetable. |
 
 ## À quoi sert `dotnet_runtime.py` ?
@@ -46,7 +46,7 @@ et est appelé automatiquement par `GsaModel.__init__`. En résumé : c'est la
 ## Utilisation
 
 ```python
-from gsa_bridge.bridge import GsaModel
+from commun.gsa_bridge.bridge import GsaModel
 
 with GsaModel(r"chemin\vers\mon_modele.gwb") as m:
     sections = m.sections()          # tables du modèle (aucune analyse requise)

@@ -18,7 +18,10 @@ Trois familles de methodes :
     facon GSA : "A1" (cas d'analyse) ou "C1" (combinaison) ;
   - ecriture (les seules qui modifient la copie de travail) : section_dediee
     (isole une propriete de section pour une cible), set_section_profile
-    (change le profil d'une section) et save_to (SaveAs explicite).
+    (change le profil d'une section) et save_to (SaveAs explicite) ;
+  - rendu 3D (aucune analyse requise) : rendu_geometrie, geometrie extrudee
+    des sections (triangles + lignes, couleurs) via Model.Draw, pour la vue
+    "sections" du panneau 3D de l'app.
 
 Le travail se fait toujours sur une COPIE du fichier (jamais l'original) ;
 seul `save_to` ecrit ailleurs, sur demande explicite de l'appelant.
@@ -31,7 +34,8 @@ import time
 import uuid
 from pathlib import Path
 
-from gsa_bridge import dotnet_runtime
+from commun.gsa_bridge import dotnet_runtime
+from commun.gsa_bridge.permutations import permutations_collection
 
 
 class ConfigurationAnalyseError(RuntimeError):
@@ -204,7 +208,7 @@ class GsaModel:
                 "materiau": s.MaterialTypeAsString(),
                 # id du materiau DANS SA COLLECTION DE TYPE (ex. SteelMaterials
                 # id 2), a associer a `materiau` pour retrouver la densite REELLE
-                # de la section (cf. app/server.py::_densites_sections) — deux
+                # de la section (cf. app_old/server.py::_densites_sections) — deux
                 # sections de types differents peuvent partager le meme id.
                 "materiau_grade": s.MaterialGradeProperty,
                 "aire_m2": p.Area,
@@ -454,20 +458,12 @@ class GsaModel:
     def _permutations(coll, marker="YY"):
         """Toutes les permutations d'un resultat le long d'un element.
 
-        Un cas d'analyse renvoie une collection plate de valeurs (traitee comme
-        une permutation unique) ; une combinaison renvoie une collection de
-        permutations (chacune une collection de valeurs le long de l'element) —
-        pour une combinaison enveloppe (type ENVELOPPE ELU), il peut y en avoir
-        plusieurs centaines. On distingue les deux via un attribut-marqueur
-        present sur la valeur unitaire mais absent d'une collection : "YY" pour
-        un Double6 (efforts/deplacements), "AxialStressA" pour une contrainte,
-        "VonMisesStress" pour une contrainte derivee.
+        SEULE implementation dans `permutations.permutations_collection` (le
+        module qui expose les permutations NON reduites, cf. son en-tete pour
+        la distinction collection plate / collection de permutations et les
+        marqueurs "YY" / "AxialStressA" / "VonMisesStress").
         """
-        if coll.Count == 0:
-            return []
-        if hasattr(coll[0], marker):
-            return [list(coll)]
-        return [list(p) for p in coll]
+        return permutations_collection(coll, marker)
 
     def _table_1d(self, data, champs, marker="YY", id_key="element",
                   progress=None) -> list[dict]:

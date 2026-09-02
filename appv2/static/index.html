@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dimensionneur GSA v2 — par groupes</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" type="image/png" href="/static/favicon_e.png">
+</head>
+<body>
+
+<!-- ======================================================================
+     Bandeau : marque à gauche, CHARGEMENT DU MODÈLE à droite.
+     Le modèle est la seule chose commune aux deux colonnes (entrées et
+     sorties) : il n'appartient à aucun onglet, il est donc au-dessus des deux.
+     ====================================================================== -->
+<header>
+  <div class="marque">
+    <img class="logo-elioth" src="/static/logo_elioth.png" alt="elioth">
+    <div class="titre-site">
+      <h1>PFE - Optimisation de charpente <span class="version">v2</span></h1>
+    </div>
+    <button id="btn-wiki" class="secondaire" type="button"
+            title="Notes et documentation du projet — un onglet par fichier .md du dossier Wiki/">Wiki</button>
+  </div>
+
+  <div class="bandeau-modele">
+    <div class="ligne-modele">
+      <select id="sel-modele" title="Modèles du dossier GSA_model/"></select>
+      <button id="btn-resume" class="principal">Charger</button>
+      <label id="zone-depot" for="input-fichier">
+        <input type="file" id="input-fichier" accept=".gwb">
+        déposer un <b>.gwb</b> <span class="ou">ou cliquer</span>
+      </label>
+    </div>
+    <p id="msg-modele" class="message"></p>
+  </div>
+</header>
+
+<div class="disposition">
+
+<!-- ======================================================================
+     COLONNE GAUCHE — LES ENTRÉES : ce qu'on décide, onglet par onglet.
+     ====================================================================== -->
+<section class="colonne colonne-entrees">
+
+  <!-- groupe étudié : la maille de tout le raisonnement (Performances et
+       Optimisation en dépendent), donc au-dessus des onglets et non dans
+       l'un d'eux — sinon il disparaîtrait de la vue au moment de lire ses
+       propres résultats -->
+  <div class="barre-groupe" id="ligne-groupe" hidden>
+    <label class="titre-option" for="sel-groupe">Groupe étudié</label>
+    <select id="sel-groupe" title="Surligné dans la vue 3D"></select>
+    <span id="info-groupe" class="calcule"></span>
+  </div>
+
+  <nav class="onglets onglets-vues" id="onglets-vues">
+    <button class="onglet actif" data-vue="modele">Résumé</button>
+    <button class="onglet" data-vue="criteres" disabled>Critères</button>
+    <button class="onglet" data-vue="perf" disabled>Performances</button>
+    <button class="onglet" data-vue="optim" disabled>Optimisation</button>
+    <button class="onglet" data-vue="global" disabled>Opt. globale</button>
+  </nav>
+
+  <!-- ==================== entrée 1 : résumé du modèle ==================== -->
+  <div class="vue" id="vue-modele">
+    <section class="etape" id="carte-resume" hidden>
+      <h2>Résumé du modèle <span id="resume-nom" class="pill"></span></h2>
+      <div id="drapeaux" class="drapeaux"></div>
+      <div class="grille" id="grille-resume"></div>
+    </section>
+    <p class="a-venir" id="invite-modele">Choisir un modèle dans le bandeau, en haut
+      à droite, puis <b>Charger</b>. Le résumé, la vue 3D et les onglets suivants
+      s'ouvrent alors.</p>
+  </div>
+
+  <!-- ==================== entrée 2 : critères ELU / ELS / instabilité =====
+       Tout ce que l'utilisateur impose au calcul, au même endroit. Changer
+       l'un de ces réglages invalide les résultats déjà affichés (cf. app.js).
+       ==================================================================== -->
+  <div class="vue" id="vue-criteres" hidden>
+    <section class="etape">
+      <h2>Critères de vérification</h2>
+      <p class="sous-titre">Ces réglages valent pour les trois onglets suivants :
+        Performances les <b>mesure</b>, les deux onglets d'optimisation s'en
+        servent pour <b>décider</b> si une section candidate est retenue.</p>
+
+      <!-- combinaisons de calcul : l'ELU est indispensable, l'ELS optionnel —
+           en premier, tout le reste (ELU/ELS/instabilité) en dépend -->
+      <div class="bloc-combos" id="bloc-combos" hidden>
+        <label class="titre-option">Combinaisons de calcul</label>
+        <div class="champs-combos">
+          <span class="champ">ELU <select id="sel-elu"
+            title="Combinaison ELU dont TOUTES les permutations sont parcourues pour trouver, barre par barre, celle qui dimensionne."></select></span>
+          <span class="champ">ELS <select id="sel-els"
+            title="Combinaison sous laquelle sont lus les déplacements des nœuds ELS. « aucune » est admis : le tableau ELU reste complet, seul le bilan de service est vide."></select></span>
+        </div>
+      </div>
+
+      <!-- ELU : taux limite + fy, et les critères de section inclus dans la
+           comparaison (combiné toujours actif, référence) -->
+      <div class="bloc-option encadre" id="bloc-elu">
+        <label class="titre-option">ELU — résistance de section</label>
+        <div class="champ">taux ≤ <input id="in-coef" type="number" step="0.05" min="0.1" max="1">
+          <span class="sep">·</span>
+          f<sub>y</sub> = <input id="in-fy" type="number" step="5" min="100"> MPa
+          <span id="lbl-sigma" class="calcule"></span></div>
+        <div class="champs-criteres" id="champs-criteres">
+          <label class="case case-fixe" title="Contrainte normale combinée : A = N/aire, B = |My|/Wpl,y + |Mz|/Wpl,z, taux = max(|A+B|,|A−B|) / fy. Toujours pris en compte : c'est la référence.">
+            <input type="checkbox" checked disabled> combiné <span class="ou">(référence)</span>
+          </label>
+          <label class="case" for="chk-torsion"
+                 title="EC3 §6.2.7 : taux = (|Mxx| / Wt) / (fy/√3), calculé depuis les efforts.">
+            <input type="checkbox" id="chk-torsion"> torsion
+          </label>
+          <label class="case" for="chk-cisaillement"
+                 title="EC3 §6.2.6 : taux = max(|Vy|/Avy, |Vz|/Avz) / (fy/√3), calculé depuis les efforts. La ligne indique l'axe (y ou z) qui gouverne.">
+            <input type="checkbox" id="chk-cisaillement"> cisaillement
+          </label>
+          <label class="case" for="chk-vonmises"
+                 title="Contrainte équivalente de von Mises LUE DANS GSA (Element1dDerivedStress), rapportée à fy. Base élastique, contrairement au critère combiné (module plastique) : l'écart entre les deux n'est pas seulement du cisaillement.">
+            <input type="checkbox" id="chk-vonmises"> von Mises
+          </label>
+        </div>
+        <p class="note-criteres">Les trois critères optionnels ne sont testés
+          <b>que par l'onglet Performances</b> : les optimisations comparent
+          combiné, torsion et cisaillement (le von Mises demanderait les
+          contraintes dérivées de GSA, non extraites là par économie).</p>
+      </div>
+
+      <!-- ELS : critères lus DANS LE MODÈLE (noms des nœuds), une ligne par
+           critère trouvé — seules la direction et la limite sont à renseigner -->
+      <div class="bloc-option encadre" id="bloc-els">
+        <label class="titre-option">ELS — critères de service (nœuds nommés)</label>
+        <div class="champ">taux ≤ <input id="in-coef-els" type="number" step="0.05" min="0.1" max="1"
+          title="Marge de dimensionnement ELS, comme pour l'ELU : 1 = pas de marge (le déplacement ne doit pas dépasser la limite du nœud), 0.9 = ne retenir une section que si son taux ELS reste sous 90 % de cette limite."></div>
+        <p class="sous-titre" id="aide-els"></p>
+        <div class="defilement"><div id="table-els-criteres"></div></div>
+      </div>
+
+      <!-- instabilité : longueurs de flambement/déversement et type de charge.
+           C1, C2, k et kw ne sont plus saisis — ils sont calculés barre par
+           barre par commun/stabilite_ec3 (cf. la note en bas de l'encadré). -->
+      <div class="bloc-coefs encadre" id="bloc-instabilite">
+        <div class="entete-encadre">
+          <label class="titre-option">Instabilité — longueurs de flambement et de déversement</label>
+          <label class="case" for="chk-instabilite"
+                 title="Cochée : le flambement et le déversement (EC3 §6.3, classeur Predim) font partie du verdict des optimisations — une section n'est retenue que si elle passe aussi la stabilité. Décochée : aucun classeur Excel n'est ouvert, une section est retenue sur ELU + ELS seuls (beaucoup plus rapide, mais l'instabilité n'est PAS vérifiée). L'onglet Performances, lui, affiche la stabilité dans tous les cas.">
+            <input type="checkbox" id="chk-instabilite" checked>
+            prise en compte dans les optimisations
+          </label>
+        </div>
+        <div class="champs-coefs">
+          <span class="champ">taux ≤ <input id="in-coef-stab" type="number" step="0.05" min="0.1" max="1"
+            title="Marge de dimensionnement sur l'instabilité (EC3 §6.3), comme pour l'ELU : 1 = pas de marge, 0.9 = ne retenir une section que si son taux d'instabilité reste sous 90 % de la limite."></span>
+        </div>
+        <div class="champs-coefs">
+          <span class="champ">Charge
+            <select id="sel-repartition" title="Type de répartition de charge (tableau B.3) — détermine laquelle des formules du tableau donne les facteurs de moment Cmy/Cmz du §6.3.3. Les facteurs eux-mêmes sont calculés depuis le diagramme de moment de chaque barre.">
+              <option value="uniforme">uniforme</option>
+              <option value="concentree">concentrée</option>
+              <option value="noeuds_deplacables">à nœuds déplaçables</option>
+            </select>
+          </span>
+        </div>
+        <div class="champs-coefs">
+          <span class="champ">L<sub>fy</sub> <input id="in-lfy" type="number" step="0.1" min="0"> m</span>
+          <span class="champ">L<sub>fz</sub> <input id="in-lfz" type="number" step="0.1" min="0"> m</span>
+          <span class="champ">L<sub>dév</sub> <input id="in-ldev" type="number" step="0.1" min="0"> m</span>
+          <button id="btn-longueur-element" class="secondaire" type="button"
+                  title="Bascule Lfy/Lfz/Ldév sur la longueur de CHAQUE barre, plutôt que la valeur unique ci-dessus.">
+            Longueur = longueur de la barre
+          </button>
+        </div>
+        <p class="note-criteres">Il n'y a plus de C1, C2, k ni k<sub>w</sub> à
+          saisir : <b>C1 et C2 sont calculés barre par barre</b> depuis son
+          diagramme de moment (§3.5 de l'Annexe MCR), et k = k<sub>w</sub> = 1
+          est imposé — c'est le domaine de validité de ces formules. Une
+          longueur de déversement différente de la portée se dit avec
+          L<sub>dév</sub>, qui joue exactement le même rôle que k·L dans
+          M<sub>cr</sub>. Le calcul est fait par
+          <span class="mono">commun/stabilite_ec3</span> (Python), pas par le
+          classeur Excel : ~30 µs par barre au lieu de 0,6 s, pour un résultat
+          identique à coefficients égaux (63 barres vérifiées, cf.
+          <span class="mono">commun/stabilite_ec3/README.md</span>).</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== entrée 3 : performances du groupe ==================== -->
+  <div class="vue" id="vue-perf" hidden>
+    <section class="etape">
+      <h2>Performances du groupe <span id="perf-nom" class="pill"></span></h2>
+
+      <div class="options-perf">
+        <label class="case" for="chk-seuls-ko"
+               title="N'affiche que les éléments dont le verdict est KO (taux ELU au-delà de la limite, ou instabilité EC3). Les critères de service portent sur des nœuds, pas sur des barres : ils ont leur propre tableau.">
+          <input type="checkbox" id="chk-seuls-ko">
+          n'afficher que les dépassements
+        </label>
+        <button id="btn-relancer" class="secondaire">Relancer le calcul</button>
+        <button id="btn-stop" class="secondaire" hidden>■ Arrêter</button>
+      </div>
+
+      <div class="ligne-perf">
+        <p id="msg-perf" class="message"></p>
+      </div>
+      <p id="avert-nuance" class="alerte-v2" hidden></p>
+
+      <div id="perf-contenu" hidden>
+        <div class="stats-perf" id="perf-stats"></div>
+
+        <!-- bilan ELS : porte sur les nœuds nommés du modèle, donc sur la
+             structure ENTIÈRE — indépendant du groupe étudié ci-dessus -->
+        <div class="bloc-els-bilan" id="bloc-els-bilan" hidden>
+          <label class="titre-option">Critères de service (ELS) —
+            <span id="lbl-els-combo" class="pill"></span></label>
+          <p class="sous-titre">Déplacements des nœuds nommés dans le modèle,
+            sous toutes les permutations de la combinaison ELS. Ces critères
+            qualifient la structure entière : ils ne dépendent pas du groupe
+            de barres sélectionné.</p>
+          <div class="defilement">
+            <table id="table-els">
+              <thead><tr>
+                <th>Critère</th>
+                <th>Type</th>
+                <th>Nœuds</th>
+                <th>Direction</th>
+                <th>Déplacement<br>mm</th>
+                <th>Limite<br>mm</th>
+                <th>Nœud<br>gouvernant</th>
+                <th>Combinaison<br>dimensionnante</th>
+                <th>Taux</th>
+                <th>Verdict</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="options-perf">
+          <span class="calcule" id="legende-table">Cliquer une ligne pour la
+            situer dans la vue 3D.</span>
+          <button id="btn-export" class="secondaire"
+                  title="Exporte le tableau affiché en CSV (s'ouvre dans Excel)">Exporter (Excel)</button>
+        </div>
+        <div class="defilement">
+          <table id="table-perf">
+            <thead><tr></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- barre sélectionnée -> vérification manuelle dans Excel -->
+        <div id="zone-excel-barre" class="bloc-excel" hidden>
+          <div class="entete-excel">
+            <label class="titre-option">Vérification EC3 — <span id="lbl-barre-excel"></span></label>
+          </div>
+          <p class="sous-titre">Ouvre le classeur Predim pré-rempli avec le
+            torseur de cette barre <b>et les C1/C2 qui viennent d'être calculés
+            pour elle</b> : le classeur repart donc des mêmes hypothèses et doit
+            retrouver les mêmes taux.</p>
+          <button id="btn-excel-barre" class="principal">Ouvrir dans Excel</button>
+          <p id="msg-excel-barre" class="message"></p>
+          <div id="recap-excel-barre" class="recap-excel" hidden></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== entrée 4 : optimisation d'un groupe ==================== -->
+  <div class="vue" id="vue-optim" hidden>
+    <section class="etape">
+      <h2>Optimisation — un groupe <span id="optim-nom" class="pill"></span></h2>
+      <p class="sous-titre">Teste, sur le groupe sélectionné, toutes les sections
+        du catalogue (même catégorie : CHS, RHS…) <b>plus légères</b> que la
+        section actuelle. Pour chaque candidat, la section est réellement
+        modifiée dans le modèle GSA et l'analyse relancée (efforts et
+        déplacements exacts), puis on lit le taux ELU du groupe et le taux des
+        critères de service ; la stabilité EC3 n'est vérifiée <b>que</b> pour
+        les candidats qui les passent, et seulement si la case « prise en
+        compte » de l'onglet Critères est cochée. Une analyse GSA par candidat :
+        c'est le calcul le plus long de l'app, le bouton Arrêter reste actif.</p>
+
+      <div class="options-perf">
+        <button id="btn-optim-lancer" class="principal">Lancer l'optimisation</button>
+        <button id="btn-optim-stop" class="secondaire" hidden>■ Arrêter</button>
+        <label class="case" for="chk-stab-approfondie"
+               title="Décoché (défaut) : la stabilité n'est vérifiée que sur la barre qui gouverne l'ELU du groupe, à sa combinaison dimensionnante — rapide. Coché : vérifiée sur TOUTES les barres du groupe, TOUTES leurs permutations et TOUTES leurs positions (0/25/50/75/100 %) — exhaustif, la case retenue est le maximum absolu sur tout le périmètre du groupe.">
+          <input type="checkbox" id="chk-stab-approfondie">
+          stabilité approfondie (toutes les barres × toutes les permutations × toutes les positions)
+        </label>
+      </div>
+      <p id="msg-optim" class="message"></p>
+
+      <div id="optim-contenu" hidden>
+        <div class="stats-perf" id="optim-stats"></div>
+        <p class="renvoi-detail">Le tableau complet — une ligne par section
+          essayée, tous les taux et toutes les combinaisons gouvernantes — est
+          dans l'onglet <b>Détail optimisation</b>, à droite ; c'est là qu'on
+          choisit la section à charger dans le modèle.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== entrée 5 : optimisation globale ==================== -->
+  <div class="vue" id="vue-global" hidden>
+    <section class="etape">
+      <h2>Optimisation globale <span id="global-nom" class="pill"></span></h2>
+      <p class="sous-titre">Enchaîne l'optimisation de <b>plusieurs familles</b>
+        (une famille = une propriété de section, comme le groupe des autres
+        onglets), dans l'ordre choisi ci-dessous. À chaque section essayée le
+        modèle est réellement modifié et l'analyse relancée, puis on vérifie
+        <b>l'ELU de toutes les familles du périmètre</b> (alléger une famille
+        redistribue les efforts sur les autres), <b>les critères ELS globaux</b>
+        et, si elle est prise en compte, <b>la stabilité EC3</b>.</p>
+
+      <!-- familles : quelles familles, dans quel ordre, avec quels paramètres
+           d'instabilité (l'ordre est le paramètre principal de l'algorithme) -->
+      <div class="bloc-option encadre" id="bloc-familles-global">
+        <label class="titre-option">Familles à optimiser — l'ordre décide du résultat</label>
+        <p class="sous-titre">Traitées de haut en bas : chacune est optimisée sur
+          la structure <b>déjà allégée</b> par celles qui la précèdent. Les
+          longueurs laissées vides reprennent celles de l'onglet Critères ;
+          k, k<sub>w</sub>, C1, C2 et le type de charge restent communs.</p>
+        <div class="defilement">
+          <table id="table-familles-global">
+            <thead><tr>
+              <th title="Inclure cette famille dans l'optimisation">✓</th>
+              <th>Ordre</th>
+              <th>Famille</th>
+              <th>Section actuelle</th>
+              <th>Barres</th>
+              <th>Masse<br>kg/m</th>
+              <th>Catalogue</th>
+              <th class="col-stab">L<sub>fy</sub><br>m</th>
+              <th class="col-stab">L<sub>fz</sub><br>m</th>
+              <th class="col-stab">L<sub>dév</sub><br>m</th>
+              <th class="col-stab" title="Lfy/Lfz/Ldév égales à la longueur réelle de chaque barre de la famille">L = barre</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bloc-option encadre" id="bloc-algo-global">
+        <label class="titre-option">Algorithme</label>
+        <div class="champs-coefs">
+          <span class="champ"><select id="sel-algo-global"></select></span>
+          <span class="champ" title="Nombre de sections consécutives en échec avant de passer à la famille suivante — même profondeur que l'onglet Optimisation.">
+            profondeur <input id="in-profondeur" type="number" step="1" min="1" value="10"></span>
+        </div>
+        <div class="champs-coefs">
+          <label class="case" for="chk-global-elu-tout"
+                 title="Décoché (défaut) : l'ELU n'est vérifié que sur les familles cochées ci-dessus. Coché : sur TOUTES les familles acier du modèle, y compris celles qu'on n'optimise pas mais qui subissent la redistribution des efforts — plus sûr, mais l'extraction coûte proportionnellement au nombre de barres.">
+            <input type="checkbox" id="chk-global-elu-tout">
+            vérifier l'ELU sur toutes les familles acier
+          </label>
+          <label class="case" for="chk-global-stab-approfondie"
+                 title="Décoché (défaut) : la stabilité est vérifiée sur la barre qui gouverne l'ELU de CHAQUE famille du périmètre, à sa combinaison dimensionnante. Coché : TOUTES les barres de chaque famille, TOUTES leurs permutations et TOUTES leurs positions (0/25/50/75/100 %) — exhaustif, la case retenue est le maximum absolu sur toute la famille (plus lent, mais chaque vérification ne coûte que ~30 µs).">
+            <input type="checkbox" id="chk-global-stab-approfondie">
+            stabilité approfondie
+          </label>
+        </div>
+        <p class="note-criteres" id="desc-algo-global"></p>
+      </div>
+
+      <div class="options-perf">
+        <button id="btn-global-lancer" class="principal">Lancer l'optimisation globale</button>
+        <button id="btn-global-stop" class="secondaire" hidden>■ Arrêter</button>
+      </div>
+      <p id="msg-global" class="message"></p>
+
+      <div id="global-contenu" hidden>
+        <div class="stats-perf" id="global-stats"></div>
+        <p id="global-avert" class="alerte-v2" hidden></p>
+
+        <!-- graphique : un point par essai — poids du modèle et verdict.
+             C'est le résumé visuel de la descente, le détail chiffré étant
+             dans l'onglet de sortie « Détail optimisation ». -->
+        <figure class="graphe-progression" id="graphe-global-bloc">
+          <figcaption>Poids du périmètre optimisé à chaque essai —
+            <span class="pt-legende ok">■</span> retenu (tout vérifié),
+            <span class="pt-legende ko">■</span> refusé.
+            Le trait suit le meilleur poids atteint.</figcaption>
+          <div id="graphe-global"></div>
+        </figure>
+
+        <label class="titre-option">Bilan par famille</label>
+        <div class="defilement">
+          <table id="table-bilan-global">
+            <thead><tr>
+              <th>Ordre</th>
+              <th>Famille</th>
+              <th>Section initiale</th>
+              <th>Section retenue</th>
+              <th>Réduction</th>
+              <th>Poids gagné<br>kg/m</th>
+              <th>Poids gagné<br>famille (kg)</th>
+              <th>Essais</th>
+              <th>État</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="renvoi-detail">Le journal complet des essais — tous les taux,
+          toutes les combinaisons gouvernantes, la famille qui gouverne l'ELU à
+          chaque essai — est dans l'onglet <b>Détail optimisation</b>, à droite.</p>
+      </div>
+    </section>
+  </div>
+
+</section>
+
+<!-- ======================================================================
+     COLONNE DROITE — LES SORTIES : ce que le calcul produit.
+     Onglets en haut, façon navigateur ; la 3D est le premier, par défaut.
+     ====================================================================== -->
+<section class="colonne colonne-sorties">
+
+  <nav class="onglets onglets-sorties" id="onglets-sorties">
+    <button class="onglet actif" data-sortie="3d">Vue 3D</button>
+    <button class="onglet" data-sortie="detail">Détail optimisation</button>
+  </nav>
+
+  <!-- ---------------- sortie 1 : vue 3D ---------------- -->
+  <div class="sortie" id="sortie-3d">
+    <div class="entete-3d">
+      <span id="titre-3d" class="pill" hidden></span>
+      <span id="poids-3d" class="pill" hidden
+            title="Poids total de la structure : Σ longueur × aire × densité, par barre (densité réelle du matériau de chaque section — calcul, pas une lecture GSA)."></span>
+      <div class="outils-3d">
+        <button id="btn-sections-3d" class="secondaire" type="button" disabled
+                title="Géométrie réelle du modèle (sections des barres extrudées), calculée par GSA sans ouvrir son interface — peut prendre quelques secondes selon la taille du modèle.">
+          Afficher les sections
+        </button>
+        <button id="btn-capture-3d" class="secondaire" type="button" disabled
+                title="Télécharge l'image actuelle du panneau 3D (PNG).">
+          Télécharger l'image
+        </button>
+      </div>
+    </div>
+    <div class="visionneuse">
+      <canvas id="vue3d"></canvas>
+      <span id="vide-3d" class="vide3d">charger un modèle pour afficher la structure</span>
+    </div>
+    <p id="msg-sections-3d" class="message"></p>
+  </div>
+
+  <!-- ---------------- sortie 2 : détail des optimisations ----------------
+       Le tableau que les deux onglets d'optimisation résument à gauche :
+       une ligne par section essayée, TOUTES les colonnes, exportable en CSV
+       (s'ouvre dans Excel). C'est aussi ici qu'on choisit la section à
+       charger dans le modèle : la sélection se fait sur la ligne. -->
+  <div class="sortie" id="sortie-detail" hidden>
+    <div class="entete-detail">
+      <div class="bascule-detail" id="bascule-detail">
+        <button class="onglet-mini actif" data-source="optim">Un groupe</button>
+        <button class="onglet-mini" data-source="global">Globale</button>
+      </div>
+      <span class="calcule" id="detail-legende"></span>
+      <button id="btn-detail-export" class="secondaire" disabled
+              title="Exporte le tableau détaillé en CSV — double-clic dans l'explorateur pour l'ouvrir dans Excel.">
+        Exporter (Excel)
+      </button>
+    </div>
+
+    <p class="a-venir" id="detail-vide">Aucune optimisation lancée.
+      Le détail apparaîtra ici dès qu'un premier candidat aura été évalué.</p>
+
+    <!-- détail « un groupe » -->
+    <div id="detail-optim" hidden>
+      <div class="defilement">
+        <table id="table-optim">
+          <thead><tr>
+            <th>Section</th>
+            <th>Profil GSA</th>
+            <th>Masse<br>kg/m</th>
+            <th>Réduction<br>section</th>
+            <th>Poids gagné<br>kg/m</th>
+            <th>Poids gagné<br>groupe (kg)</th>
+            <th>Taux ELU</th>
+            <th>Critère ELU</th>
+            <th>Combinaison<br>ELU</th>
+            <th>Barre<br>ELU</th>
+            <th title="Effort normal retenu pour l'ELU, kN (> 0 = traction)">N<br>ELU</th>
+            <th title="Effort tranchant Vy retenu pour l'ELU, kN">V<sub>y</sub><br>ELU</th>
+            <th title="Effort tranchant Vz retenu pour l'ELU, kN">V<sub>z</sub><br>ELU</th>
+            <th title="Moment de torsion retenu pour l'ELU, kNm">M<sub>xx</sub><br>ELU</th>
+            <th title="Moment fléchissant My retenu pour l'ELU, kNm">M<sub>y</sub><br>ELU</th>
+            <th title="Moment fléchissant Mz retenu pour l'ELU, kNm">M<sub>z</sub><br>ELU</th>
+            <th title="Position le long de la barre (0/25/50/75/100 %) où cette case a été lue">Lieu<br>ELU</th>
+            <th>Taux ELS</th>
+            <th>Critère ELS</th>
+            <th>Nœud<br>ELS</th>
+            <th>Combinaison<br>ELS</th>
+            <th>ELU+ELS</th>
+            <th>Taux<br>stabilité</th>
+            <th>Cas de<br>stabilité</th>
+            <th>Barre<br>stab.</th>
+            <th>Combinaison<br>stab.</th>
+            <th title="Effort normal de la case qui gouverne la stabilité, kN (> 0 = traction)">N<br>stab.</th>
+            <th title="Effort tranchant Vy de la case qui gouverne la stabilité, kN">V<sub>y</sub><br>stab.</th>
+            <th title="Effort tranchant Vz de la case qui gouverne la stabilité, kN">V<sub>z</sub><br>stab.</th>
+            <th title="Moment de torsion de la case qui gouverne la stabilité, kNm">M<sub>xx</sub><br>stab.</th>
+            <th title="Moment fléchissant My de la case qui gouverne la stabilité, kNm">M<sub>y</sub><br>stab.</th>
+            <th title="Moment fléchissant Mz de la case qui gouverne la stabilité, kNm">M<sub>z</sub><br>stab.</th>
+            <th title="Position le long de la barre (0/25/50/75/100 %) où cette case a été lue">Lieu<br>stab.</th>
+            <th title="EC3 §6.3.1">Flamb.</th>
+            <th title="EC3 §6.3.2">Dévers.</th>
+            <th title="EC3 [6.61]">M+N yy</th>
+            <th title="EC3 [6.62]">M+N zz</th>
+            <th title="Classe de section EC3 §5.5, lue dans le classeur Predim">Classe</th>
+            <th>Verdict</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- section sélectionnée -> enregistrée dans <modele>_opti.gwb et ouverte dans GSA,
+           ou classeur Predim ouvert pré-rempli avec ses conditions de stabilité -->
+      <div id="zone-charger-section" class="bloc-excel" hidden>
+        <div class="entete-excel">
+          <label class="titre-option">Section sélectionnée — <span id="lbl-section-charger"></span></label>
+        </div>
+        <button id="btn-charger-section" class="principal">Charger et ouvrir dans GSA</button>
+        <button id="btn-excel-section" title="Ouvre le classeur Predim pré-rempli avec le torseur et les coefficients (C1/C2/k/kw) déjà calculés pour cette section">Ouvrir dans Excel</button>
+        <p id="msg-charger-section" class="message"></p>
+      </div>
+    </div>
+
+    <!-- détail « globale » -->
+    <div id="detail-global" hidden>
+      <div class="options-perf">
+        <label class="case" for="chk-global-seules-retenues">
+          <input type="checkbox" id="chk-global-seules-retenues">
+          n'afficher que les sections retenues
+        </label>
+      </div>
+      <div class="defilement">
+        <table id="table-global">
+          <thead><tr>
+            <th>Ordre</th>
+            <th>Famille</th>
+            <th>Section</th>
+            <th>Profil GSA</th>
+            <th>Masse<br>kg/m</th>
+            <th>Réduction<br>section</th>
+            <th>Poids gagné<br>kg/m</th>
+            <th>Poids gagné<br>famille (kg)</th>
+            <th title="Poids du périmètre optimisé dans l'état où cet essai a laissé le modèle">Poids<br>modèle (kg)</th>
+            <th>Taux ELU</th>
+            <th>Critère ELU</th>
+            <th>Combinaison<br>ELU</th>
+            <th>Barre<br>ELU</th>
+            <th title="Famille dont la barre gouverne l'ELU — pas forcément celle qu'on allège">Famille<br>ELU</th>
+            <th title="Effort normal retenu pour l'ELU, kN (> 0 = traction)">N<br>ELU</th>
+            <th title="Effort tranchant Vy retenu pour l'ELU, kN">V<sub>y</sub><br>ELU</th>
+            <th title="Effort tranchant Vz retenu pour l'ELU, kN">V<sub>z</sub><br>ELU</th>
+            <th title="Moment de torsion retenu pour l'ELU, kNm">M<sub>xx</sub><br>ELU</th>
+            <th title="Moment fléchissant My retenu pour l'ELU, kNm">M<sub>y</sub><br>ELU</th>
+            <th title="Moment fléchissant Mz retenu pour l'ELU, kNm">M<sub>z</sub><br>ELU</th>
+            <th title="Position le long de la barre (0/25/50/75/100 %) où cette case a été lue">Lieu<br>ELU</th>
+            <th>Taux ELS</th>
+            <th>Critère ELS</th>
+            <th>Nœud<br>ELS</th>
+            <th>Combinaison<br>ELS</th>
+            <th>Taux<br>stabilité</th>
+            <th>Cas de<br>stabilité</th>
+            <th>Barre<br>stab.</th>
+            <th>Combinaison<br>stab.</th>
+            <th title="Effort normal de la case qui gouverne la stabilité, kN (> 0 = traction)">N<br>stab.</th>
+            <th title="Effort tranchant Vy de la case qui gouverne la stabilité, kN">V<sub>y</sub><br>stab.</th>
+            <th title="Effort tranchant Vz de la case qui gouverne la stabilité, kN">V<sub>z</sub><br>stab.</th>
+            <th title="Moment de torsion de la case qui gouverne la stabilité, kNm">M<sub>xx</sub><br>stab.</th>
+            <th title="Moment fléchissant My de la case qui gouverne la stabilité, kNm">M<sub>y</sub><br>stab.</th>
+            <th title="Moment fléchissant Mz de la case qui gouverne la stabilité, kNm">M<sub>z</sub><br>stab.</th>
+            <th title="Position le long de la barre (0/25/50/75/100 %) où cette case a été lue">Lieu<br>stab.</th>
+            <th>Retenue</th>
+            <th>Verdict</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- sections retenues -> enregistrées dans <modele>_opti.gwb et ouvertes dans GSA -->
+      <div id="zone-charger-global" class="bloc-excel" hidden>
+        <div class="entete-excel">
+          <label class="titre-option">Charger le résultat dans le modèle —
+            <span id="lbl-global-charger"></span></label>
+        </div>
+        <button id="btn-charger-global" class="principal">Charger et ouvrir dans GSA</button>
+        <p id="msg-charger-global" class="message"></p>
+      </div>
+
+      <!-- ligne d'essai sélectionnée -> classeur Predim ouvert pré-rempli avec
+           ses conditions de stabilité (torseur, C1/C2/k/kw déjà calculés) -->
+      <div id="zone-excel-global" class="bloc-excel" hidden>
+        <div class="entete-excel">
+          <label class="titre-option">Essai sélectionné — <span id="lbl-global-excel"></span></label>
+        </div>
+        <button id="btn-excel-global" title="Ouvre le classeur Predim pré-rempli avec le torseur et les coefficients (C1/C2/k/kw) déjà calculés pour cet essai">Ouvrir dans Excel</button>
+        <p id="msg-excel-global" class="message"></p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+</div>
+
+<!-- ======================================================================
+     Wiki : notes de projet, hors du raisonnement GSA — un onglet par fichier
+     .md du dossier Wiki/ (cf. GET /api/wiki). Recouvre toute la page ; se
+     ferme sans perdre l'état du reste de l'app (rien n'est réinitialisé).
+     ====================================================================== -->
+<div id="vue-wiki" class="wiki-overlay" hidden>
+  <div class="wiki-cadre">
+    <div class="wiki-entete">
+      <nav class="onglets" id="wiki-onglets"></nav>
+      <button id="btn-wiki-fermer" class="secondaire" type="button">✕ Fermer</button>
+    </div>
+    <div class="wiki-corps" id="wiki-corps">
+      <p class="a-venir" id="wiki-vide" hidden>Aucun fichier .md dans le dossier
+        <span class="mono">Wiki/</span>. En ajouter un (avec un titre
+        <span class="mono"># Titre</span> en première ligne) puis rouvrir cette
+        page pour le voir apparaître en onglet.</p>
+      <div id="wiki-contenu" class="wiki-contenu"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>PFE v2 — pont GSA in-process (GsaAPI .NET)</span>
+  <span class="tiret">–</span>
+  <span>les fichiers maîtres ne sont jamais modifiés</span>
+</footer>
+
+<script src="/static/viewer3d.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

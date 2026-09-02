@@ -6,15 +6,63 @@ __pycache__/
 # Sorties générées / régénérables
 result/
 optimisations/
-gsa_bridge/runtime/
-excel_bridge/runtime/
-excel_bridge/results/
-
-# Tableau brut régénérable (78 Mo, cf. tests/README.md) — on garde le reste de tests/resultats/
-tests/resultats/canopee_elu_permutations.csv
+commun/gsa_bridge/runtime/
+commun/excel_bridge/runtime/
+commun/excel_bridge/results/
+*.lok
 
 # Config locale (non partagée)
 .claude/settings.local.json
 
 # Éditeur
 .vscode/
+
+# --- Ce qui suit n'est pas necessaire au fonctionnement de l'app (appv2/) : ---
+# tests, etudes, comparaisons, scripts d'analyse ponctuels, redaction de these.
+# Rien n'est supprime : tout reste en local pour la suite de la these, seul
+# le push vers GitHub est evite (cf. appv2/README.md pour ce qui EST
+# necessaire a l'app).
+
+# ancienne version de l'app, remplacee par appv2/
+app_old/
+app/
+
+# etudes de sensibilite / comparaisons de modeles (pas l'app elle-meme)
+comparaison_modele/
+etude_formulation/
+visualisation/
+
+# suite de tests + resultats generes
+tests/
+
+# scripts d'analyse ponctuels (racine et sous-dossiers)
+/ajouter_moyennes_tableau.py
+/analyse_c1_c2_gsa.py
+/design.py
+/scripts/
+catalogues/scripts/
+commun/excel_bridge/scripts/
+
+# ancien moteur d'optimisation (algo_opti), remplace dans appv2 par sa
+# propre boucle sur les groupes de barres — ne reste utilise que par
+# app_old/ et comparaison_modele/, deja exclus ci-dessus
+commun/algo_opti/
+
+# redaction de these / journal de build — pas du code, pas necessaire a l'app
+/REVUE_LITTERATURE.md
+/FORMULATION_OPTIMISATION.md
+/suivi_build/
+
+# modeles GSA jamais suivis jusqu'ici (benchmarks/variantes d'essai de these)
+# — les modeles deja suivis depuis le debut (Canopee - Modele de Vent.gwb,
+# 25-bar truss.gwb, Poutre ISO.gwb, Pratt_1.gwb, Pratt_1_rotule.gwb) ne sont
+# pas concernes et restent suivis normalement
+GSA_model/10_story_frame.gwb
+GSA_model/10_story_frame_opti.gwb
+GSA_model/10_story_frame_opti_litterature.gwb
+GSA_model/10_story_frame_test.gwb
+GSA_model/240320_gymnase_v27_CG.gwb
+GSA_model/240320_gymnase_v27_CG_opti.gwb
+GSA_model/24_story_frame.gwb
+GSA_model/2_bay_3_story_frame.gwb
+GSA_model/Pratt_1_ELS_test.gwb

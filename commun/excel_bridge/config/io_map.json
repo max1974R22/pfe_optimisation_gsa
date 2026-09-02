@@ -102,6 +102,15 @@
     "torseur_My_ELS_kNm": { "address": "Q25", "description": "Torseur saisi : My,Ed ELS en kNm (ecrase la formule)" },
     "torseur_Mz_ELS_kNm": { "address": "Q26", "description": "Torseur saisi : Mz,Ed ELS en kNm (ecrase la formule)" },
 
+    "combinaison_dimensionnante": {
+      "address": "C2",
+      "description": "Note manuelle, SANS EFFET sur le calcul : libelle de la combinaison ELU dont proviennent les efforts saisis (ex. 'C165' ou 'C9p03') — cellule 'Combi' du classeur, prevue a cet effet et jusqu'ici laissee vide."
+    },
+    "position_dimensionnante": {
+      "address": "C3",
+      "description": "Note manuelle, SANS EFFET sur le calcul : position (%) le long de la barre des efforts saisis — cellule 'Pos' du classeur, prevue a cet effet et jusqu'ici laissee vide."
+    },
+
     "my_debut_kNm":  { "address": "D31", "description": "Distribution de moments (stabilite, facteurs Cm) : My,Ed au debut de la barre, kNm (ecrase la formule)" },
     "my_milieu_kNm": { "address": "D32", "description": "Distribution : My,Ed a mi-barre, kNm (ecrase la formule)" },
     "my_fin_kNm":    { "address": "D33", "description": "Distribution : My,Ed a la fin, kNm (ecrase la formule)" },
@@ -114,6 +123,7 @@
     "taux_fleche": { "address": "L2", "description": "Taux d'utilisation en fleche (§7.2)" },
     "taux_contrainte": { "address": "L3", "description": "Taux d'utilisation en contrainte (§6.2)" },
     "taux_stabilite": { "address": "L4", "description": "Taux d'utilisation en stabilite (§6.3) = MAX(X35:X38)" },
+    "classe": { "namedRange": "classe", "description": "Classe de section EC3 (§5.5, table 5.2), 1 a 4 = MAX(classe yy, classe zz) — plage nommee 'classe' (Calcul!W3)." },
     "taux_flambement": { "address": "X35", "description": "§6.3.1 Flambement barre comprimee (0 si N,Ed > 0 : traction)" },
     "taux_deversement": { "address": "X36", "description": "§6.3.2 Deversement" },
     "taux_flechie_comprimee_yy": { "address": "X37", "description": "§6.3.3 Barre flechie et comprimee, eq. [6.61] (plan yy)" },

@@ -1,0 +1,876 @@
+/* ==== Dimensionneur GSA v2 — identité graphique Elioth by Egis ====
+   MÊME charte que app_old/static/style.css (fichier repris tel quel), puis
+   ÉTENDU EN FIN DE FICHIER, par blocs datés, pour ce que v2 ajoute : choix du
+   groupe et comparaison de critères, puis l'onglet Opt. globale, puis la
+   disposition v3 (bandeau de chargement, colonne d'entrées, colonne de
+   sorties). Le début du fichier reste la charte partagée, à ne pas retoucher :
+   les règles propres à v2 vivent après le séparateur « appv2 — spécifique ».
+   Charte : reference/Identité graphique/Elioth_charteGraphique-Nov2020.pdf
+   - éditorial : blanc dominant, beaucoup d'air, filets fins, AUCUN arrondi
+   - Gilroy (extrabold pour les titres) sinon Segoe UI
+   - libellés en petites capitales espacées
+   - magenta identitaire en petites touches seulement, bleu nuit pour le texte */
+:root {
+  --fond: #ffffff;
+  --fond-2: #f4f8f8;               /* blanc teinté gris acier clair */
+  --bord: #d9e4e5;
+  --filet: #0b1f33;                /* filets appuyés, façon éditoriale */
+  --texte: #0b1f33;                /* bleu nuit Egis */
+  --texte-2: #61828a;              /* gris acier moyen */
+  --accent: #e6007e;               /* magenta identitaire */
+  --accent-fonce: #b30062;
+  --acier-clair: #96b8ba;
+  --bleu-320: #009ca6;
+  --vert-egis: #a5c400;
+  --bleu-canard: #0a5e73;
+  --ok: #6f8500;                   /* vert egis assombri (lisible sur blanc) */
+  --ok-pastel: #f2f6dd;
+  --avert: #ef8fc2;
+  --ko: #e6007e;
+  --ko-pastel: #fdeaf4;
+  /* vue 3D (schéma technique : couleurs Egis) */
+  --v3d-element: #0a5e73;
+  --v3d-noeud: #0b1f33;
+  --v3d-appui: #6f8500;
+  --v3d-texte: #61828a;
+  font-size: 15px;
+}
+* { box-sizing: border-box; }
+/* l'attribut hidden doit gagner meme sur les elements qui ont un display en CSS
+   (ex. .vide3d en display:grid restait visible apres chargement) */
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--fond); color: var(--texte);
+  font-family: Gilroy, "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+/* libellé éditorial : petites capitales espacées */
+.titre-option, .tuile h3, footer, .pill {
+  text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 600;
+}
+
+/* ---- entête ---- */
+header {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 12px 32px; border-bottom: 1px solid var(--filet);
+  background: var(--fond);
+  position: sticky; top: 0; z-index: 5;
+}
+.marque { display: flex; gap: 22px; align-items: center; }
+.logo-elioth { height: 34px; }
+.titre-site { border-left: 1px solid var(--bord); padding-left: 22px; }
+h1 { margin: 0; font-size: 1.3rem; letter-spacing: .01em; font-weight: 800; }
+header p {
+  margin: 3px 0 0; color: var(--texte-2); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .12em;
+}
+.tiret { color: var(--accent); padding: 0 .35em; }
+
+/* ---- disposition : ENTRÉES à gauche, SORTIES à droite ------------------
+   Moitié/moitié : c'est le parti pris de la page (on décide à gauche, on
+   regarde à droite). La colonne de sortie est COLLANTE et défile dans son
+   propre cadre : la 3D ou le tableau détaillé restent sous les yeux pendant
+   qu'on fait défiler les entrées, beaucoup plus longues. Le chargement du
+   modèle n'est dans aucune des deux colonnes — il est dans le bandeau, parce
+   que les deux en dépendent. */
+:root { --haut-bandeau: 92px; }      /* hauteur de l'entête collante */
+.disposition {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 30px; max-width: 1900px; margin: 0 auto 40px; padding: 0 32px;
+  align-items: start;
+}
+.colonne { min-width: 0; }
+.colonne-entrees { padding-bottom: 60px; }
+.colonne-sorties {
+  position: sticky; top: var(--haut-bandeau);
+  height: calc(100vh - var(--haut-bandeau) - 16px);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.colonne-sorties .sortie { flex: 1 1 auto; min-height: 0; overflow: auto; }
+#sortie-3d { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+#sortie-3d .visionneuse { flex: 1 1 auto; min-height: 280px; margin-bottom: 0; }
+#sortie-3d #vue3d { height: 100%; min-height: 280px; }
+.entete-3d { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding-top: 10px; }
+.entete-3d .titre-option { color: var(--texte-2); }
+.vide3d {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--texte-2); font-size: .85rem; pointer-events: none;
+  text-transform: uppercase; letter-spacing: .12em;
+}
+.outils-3d { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.outils-3d button { padding: 6px 14px; font-size: .68rem; }
+#msg-sections-3d { margin-top: 0; flex: 0 0 auto; }
+/* écran étroit : une seule colonne, les sorties passent AU-DESSUS (on veut
+   voir la structure avant de régler quoi que ce soit) et cessent d'être
+   collantes — sinon elles mangeraient tout l'écran */
+@media (max-width: 1180px) {
+  .disposition { grid-template-columns: 1fr; }
+  .colonne-sorties { position: static; height: auto; order: -1; }
+  .colonne-sorties .sortie { overflow: visible; }
+  #sortie-3d #vue3d { height: 320px; }
+}
+
+/* ---- étapes (sections éditoriales : filet + numéro, pas de boîte) ---- */
+.etape { border-top: 1px solid var(--bord); padding: 34px 0 44px; }
+.etape:first-of-type { border-top: 0; }
+h2 {
+  margin: 0 0 22px; font-size: 1.15rem; font-weight: 800;
+  display: flex; align-items: baseline; gap: 14px; letter-spacing: .01em;
+}
+.num { color: var(--accent); font-size: .8rem; font-weight: 800; letter-spacing: .1em; }
+.pill {
+  padding: 4px 10px; border: 1px solid var(--bord);
+  color: var(--texte-2); background: var(--fond); font-weight: 600;
+}
+.pill.ok { color: var(--ok); border-color: var(--ok); background: var(--ok-pastel); }
+.pill.ko { color: var(--ko); border-color: var(--ko); background: var(--ko-pastel); }
+
+/* ---- 1. modèle ---- */
+.ligne-modele { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; }
+select, input[type=number] {
+  background: var(--fond); color: var(--texte); border: 1px solid var(--filet);
+  border-radius: 0; padding: 10px 12px; font: inherit;
+}
+select { min-width: 280px; }
+select:focus, input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+button {
+  border: 1px solid var(--filet); border-radius: 0; padding: 10px 22px;
+  font: inherit; font-weight: 700; font-size: .78rem;
+  text-transform: uppercase; letter-spacing: .12em;
+  cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+button:active { transform: translateY(1px); }
+button:disabled { opacity: .4; cursor: wait; }
+.principal { background: var(--texte); color: white; border-color: var(--texte); }
+.principal:hover { background: var(--accent); border-color: var(--accent); }
+.secondaire { background: var(--fond); color: var(--texte); }
+.secondaire:hover { border-color: var(--accent); color: var(--accent); }
+#zone-depot {
+  flex: 1; min-width: 240px; display: grid; place-items: center; padding: 10px;
+  border: 1px dashed var(--texte-2); color: var(--texte-2);
+  cursor: pointer; font-size: .85rem; transition: border-color .15s, background .15s;
+}
+#zone-depot.survol { border-color: var(--accent); background: var(--ko-pastel); }
+#zone-depot input { display: none; }
+#zone-depot .ou { opacity: .6; }
+.message { margin: 12px 0 0; font-size: .85rem; color: var(--texte-2); min-height: 1.2em; }
+.message.erreur { color: var(--ko); }
+.message.ok { color: var(--ok); }
+.ligne-perf { display: flex; align-items: center; gap: 16px; }
+.ligne-perf .message { flex: 1; }
+#btn-perf-stop { color: var(--ko); border-color: var(--ko); white-space: nowrap; }
+#btn-perf-stop:hover { background: var(--ko); color: #fff; }
+
+/* ---- 2. résumé ---- */
+.drapeaux { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.tuile { border: 1px solid var(--bord); padding: 16px 18px; background: var(--fond); }
+.tuile h3 {
+  margin: 0 0 10px; color: var(--texte-2);
+  padding-bottom: 8px; border-bottom: 1px solid var(--bord);
+}
+.tuile table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.tuile td, .tuile th { padding: 3px 6px 3px 0; text-align: left; vertical-align: top; }
+.tuile th { color: var(--texte-2); font-weight: 500; white-space: nowrap; }
+.tuile tr + tr td, .tuile tr + tr th { border-top: 1px solid color-mix(in srgb, var(--bord) 65%, transparent); }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: .82rem; }
+
+/* lignes repliées des tuiles : dépliables via le petit + */
+.tuile tr.cachee { display: none; }
+.tuile tr.cachee.visible { display: table-row; }
+.ligne-plus td { padding-top: 5px; }
+.btn-plus {
+  border: 0; background: none; padding: 2px 0; cursor: pointer;
+  color: var(--accent); font-size: .72rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.btn-plus:hover { text-decoration: underline; }
+
+/* ---- vue 3D ---- */
+.visionneuse {
+  position: relative; margin-bottom: 18px;
+  border: 1px solid var(--bord); background: var(--fond); overflow: hidden;
+}
+#vue3d { display: block; width: 100%; height: 340px; cursor: grab; touch-action: none; }
+#vue3d:active { cursor: grabbing; }
+.appui { color: var(--ok); font-size: .78rem; }
+
+/* ---- onglets principaux (Modèle / Performances / Optimisation) ---- */
+.onglets-vues { margin-top: 34px; }
+.onglets-vues .onglet {
+  padding: 12px 22px; font-size: .82rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em;
+}
+.onglets-vues .onglet:disabled { opacity: .35; cursor: not-allowed; }
+.vue > .etape:first-child { border-top: 0; }
+
+/* ---- performances du modèle actuel ---- */
+#perf-detail > summary {
+  cursor: pointer; text-transform: uppercase; letter-spacing: .12em;
+  font-size: .78rem; font-weight: 700; color: var(--texte);
+  padding: 4px 0; user-select: none;
+}
+#perf-detail > summary:hover { color: var(--accent); }
+#perf-detail > summary::marker { color: var(--accent); }
+.bloc-coefs {
+  border: 1px solid var(--bord); padding: 14px 18px; margin: 14px 0;
+  display: grid; gap: 10px;
+}
+.champs-coefs { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; }
+.champs-coefs .champ input { width: 64px; }
+.note-repartition { color: var(--texte-2); font-size: .78rem; font-style: italic; }
+
+.bloc-combos {
+  border: 1px solid var(--accent); padding: 14px 18px; margin: 14px 0;
+  display: grid; gap: 10px; background: var(--ko-pastel);
+}
+.champs-combos { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; }
+.champs-combos .champ select { max-width: 320px; }
+
+.stats-perf {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px; margin: 18px 0;
+}
+.stat { border: 1px solid var(--bord); padding: 14px 18px; display: grid; gap: 3px; }
+.stat-titre {
+  text-transform: uppercase; letter-spacing: .14em; font-size: .68rem;
+  color: var(--texte-2); font-weight: 600;
+}
+.stat-valeur { font-size: 1.45rem; font-weight: 800; line-height: 1.2; }
+.stat-detail { color: var(--texte-2); font-size: .8rem; }
+#perf-detail { margin-top: 6px; }
+#perf-detail .case { margin: 12px 0; }
+.bloc-mesures-perf { margin: 14px 0 4px; }
+.note-gouv {
+  display: block; color: var(--texte-2); font-size: .72rem;
+  font-family: Consolas, "Cascadia Mono", monospace; margin-top: 2px;
+}
+#table-perf { width: 100%; border-collapse: collapse; font-size: .86rem; }
+#table-perf th {
+  text-align: right; padding: 9px 12px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .7rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+#table-perf td { text-align: right; padding: 7px 12px; border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent); }
+#table-perf th:first-child, #table-perf td:first-child { text-align: left; font-weight: 700; }
+#table-perf td:nth-child(2) { text-align: left; }
+#table-perf td.pire { color: var(--accent); font-weight: 700; }
+/* colonnes ELU/stabilité : valeur + jauge colorée (barreTaux), même
+   mise en page que #table-global — pas de case surlignée, la couleur de la
+   jauge (vert/orange/rouge) suffit à repérer un dépassement */
+/* ligne KO (taux ELU ou stabilité dépassé — l'ELS porte sur des nœuds, pas
+   sur des barres : il a son propre tableau) : même code couleur que
+   #table-global tr.depassee */
+#table-perf tbody tr.depassee { background: var(--ko-pastel); }
+#table-perf tbody tr.depassee:hover { background: var(--ko-pastel); }
+/* onglet Optimisation : même code couleur que #table-perf */
+#table-optim tbody tr.depassee { background: var(--ko-pastel); }
+#table-optim tbody tr.depassee:hover { background: var(--ko-pastel); }
+#table-optim .cel-stab.substitue { background: var(--ko-pastel); }
+
+/* ---- critères ELS (nœuds nommés) ----
+   Deux tableaux : les RÉGLAGES dans l'encadré ELS de la carte modèle (une
+   ligne par critère trouvé dans le modèle : direction + limite), et le BILAN
+   dans l'onglet Performances (une ligne par critère : déplacement, taux,
+   verdict). Ils ne portent pas sur les barres, d'où un tableau séparé du
+   tableau par barre. */
+#bloc-els .sous-titre { margin: 6px 0 12px; max-width: 720px; }
+.table-els-reglages { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.table-els-reglages th {
+  text-align: left; padding: 6px 10px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .68rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.table-els-reglages td {
+  padding: 5px 10px; border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent);
+}
+.table-els-reglages input[type="number"] { width: 78px; text-align: center; }
+.table-els-reglages select { width: 62px; }
+/* critère mal déclaré dans le modèle (nombre de nœuds incorrect, géométrie
+   dégénérée) ou décoché : lisible mais visiblement hors calcul */
+.table-els-reglages tr.critere-invalide,
+#table-els tbody tr.critere-invalide { opacity: .55; }
+
+.bloc-els-bilan { margin: 26px 0 10px; }
+.bloc-els-bilan .sous-titre { margin: 6px 0 12px; max-width: 720px; }
+#table-els { width: 100%; border-collapse: collapse; font-size: .86rem; }
+#table-els th {
+  text-align: right; padding: 9px 12px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .7rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+#table-els td { text-align: right; padding: 7px 12px; border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent); }
+#table-els th:first-child, #table-els td:first-child { text-align: left; font-weight: 700; }
+#table-els th:nth-child(2), #table-els td:nth-child(2),
+#table-els th:nth-child(3), #table-els td:nth-child(3) { text-align: left; }
+#table-els tbody tr.depassee { background: var(--ko-pastel); }
+
+.options-perf { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; margin: 10px 0 4px; }
+.options-perf .case { margin: 0; }
+#btn-perf-export { margin-left: auto; }
+/* lignes de detail par position (0/25/50/75/100 %), sous la ligne de la barre
+   quand « enveloppe sur les éléments » est active */
+#table-perf tr.ligne-position { cursor: default; background: color-mix(in srgb, var(--fond-2) 55%, transparent); }
+#table-perf tr.ligne-position:hover { background: color-mix(in srgb, var(--fond-2) 55%, transparent); }
+#table-perf tr.ligne-position td { font-size: .8rem; color: var(--texte-2); }
+#table-perf tr.ligne-position td:first-child { font-weight: 400; padding-left: 22px; }
+#table-perf tbody tr { cursor: pointer; }
+#table-perf tbody tr:hover { background: var(--fond-2); }
+#table-perf tbody tr.selectionnee { background: var(--ko-pastel); }
+#table-perf tbody tr.selectionnee td:first-child { color: var(--accent); }
+#table-global tbody tr { cursor: pointer; }
+#table-global tbody tr:hover { background: var(--fond-2); }
+#table-global tbody tr.selectionnee { background: var(--ko-pastel); }
+#table-global tbody tr.selectionnee td:first-child { color: var(--accent); }
+#table-global td.pire { color: var(--ko); font-weight: 700; }
+#table-optim tbody tr { cursor: pointer; }
+#table-optim tbody tr:hover { background: var(--fond-2); }
+#table-optim tbody tr.selectionnee { background: var(--ko-pastel); outline: 1px solid var(--accent); }
+#table-optim tbody tr.selectionnee td:first-child { color: var(--accent); }
+
+/* ---- 4. options ---- */
+.options { display: flex; gap: 34px; flex-wrap: wrap; align-items: flex-end; }
+.bloc-option { display: grid; gap: 10px; }
+.titre-option { color: var(--texte-2); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  padding: 8px 16px; border: 1px solid var(--bord); background: var(--fond);
+  color: var(--texte); letter-spacing: .06em;
+}
+.chip:hover { border-color: var(--texte); }
+.chip.actif { background: var(--texte); border-color: var(--texte); color: white; }
+.chip.petite { padding: 6px 11px; font-size: .74rem; font-family: Consolas, "Cascadia Mono", monospace; text-transform: none; letter-spacing: 0; }
+.bloc-mesures { max-width: 470px; }
+.bloc-cible { min-width: 300px; max-width: 380px; }
+.bloc-cible select { width: 100%; min-width: 0; }
+.onglets { display: flex; border-bottom: 1px solid var(--bord); flex-wrap: wrap; }
+.onglet {
+  border: 0; border-bottom: 2px solid transparent; background: none;
+  padding: 7px 14px; margin-bottom: -1px; color: var(--texte-2);
+}
+.onglet:hover { color: var(--texte); }
+.onglet.actif { color: var(--texte); border-bottom-color: var(--accent); }
+.case { display: flex; align-items: center; gap: 8px; font-size: .88rem; cursor: pointer; }
+.case input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
+.case .ou { color: var(--texte-2); }
+.champ { display: flex; align-items: center; gap: 7px; font-size: .95rem; }
+.champ input { width: 78px; text-align: center; }
+.calcule { color: var(--texte-2); font-size: .82rem; }
+#btn-lancer { padding: 14px 30px; }
+
+/* ordre d'optimisation des familles (mode global) : liste glisser-déposer */
+.ordre-familles { list-style: none; margin: 2px 0; padding: 0; display: grid; gap: 4px; }
+.ordre-familles li {
+  display: flex; align-items: center; gap: 8px; cursor: grab;
+  padding: 7px 10px; border: 1px solid var(--bord); background: var(--fond);
+  font-size: .84rem; user-select: none;
+}
+.ordre-familles li:hover { border-color: var(--texte); }
+.ordre-familles li.glisse { opacity: .4; }
+.ordre-familles li.cible-drop { border-color: var(--accent); border-style: dashed; }
+.ordre-familles .rang {
+  min-width: 20px; height: 20px; display: inline-flex; align-items: center;
+  justify-content: center; background: var(--texte); color: white;
+  font-size: .72rem; font-weight: 700; border-radius: 50%;
+}
+.ordre-familles .poignee { color: var(--texte-2); cursor: grab; margin-left: auto; }
+.ordre-familles .fam-nb { color: var(--texte-2); font-family: Consolas, "Cascadia Mono", monospace; }
+
+/* paramètres de l'algorithme génétique (mode global) */
+.params-algo { border: 1px solid var(--bord); background: var(--fond-2); padding: 10px 12px; }
+.params-algo .titre-params {
+  color: var(--texte-2); font-size: .74rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px;
+}
+.grille-params { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; }
+.grille-params label {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; font-size: .8rem; color: var(--texte-2);
+}
+.grille-params input { width: 62px; text-align: center; }
+
+/* graphe de progression (masse totale par configuration essayée) */
+.graphe-progression { margin: 0 0 18px; padding: 0; }
+.graphe-progression figcaption {
+  color: var(--texte-2); font-size: .8rem; margin-bottom: 6px;
+}
+#graphe-svg svg { width: 100%; height: auto; display: block; }
+#graphe-svg .axe { stroke: var(--bord); stroke-width: 1; }
+#graphe-svg .grille { stroke: var(--bord); stroke-width: 1; stroke-dasharray: 2 4; opacity: .6; }
+#graphe-svg .etiquette { fill: var(--texte-2); font-size: 11px; font-family: Consolas, "Cascadia Mono", monospace; }
+#graphe-svg .pt-ok { fill: var(--accent); }
+#graphe-svg .pt-ko { fill: var(--bord); }
+#graphe-svg .ligne-best { fill: none; stroke: var(--ok); stroke-width: 2; }
+#graphe-svg circle[data-i] { cursor: pointer; }
+#graphe-svg .pt-selection { fill: none; stroke: var(--texte); stroke-width: 2; }
+#graphe-global { cursor: pointer; }
+#graphe-global:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+#point-info {
+  margin-top: 8px; padding: 8px 12px; font-size: .82rem;
+  background: var(--fond); border-left: 3px solid var(--texte);
+}
+#point-info button {
+  margin-left: 8px; padding: 3px 10px; font-size: .68rem;
+  background: var(--fond); color: var(--texte); border: 1px solid var(--filet);
+}
+#point-info button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- 4. résultats ---- */
+#banniere { margin-bottom: 14px; }
+.banniere-ok, .banniere-ko { padding: 15px 19px; font-size: 1.02rem; }
+.banniere-ok { background: var(--ok-pastel); border-left: 3px solid var(--ok); }
+.banniere-ok b { color: var(--ok); font-size: 1.15rem; }
+.banniere-ko { background: var(--ko-pastel); border-left: 3px solid var(--ko); color: var(--ko); }
+.sous-titre { color: var(--texte-2); font-size: .84rem; margin: 0 0 14px; }
+.defilement { overflow-x: auto; }
+#table-res { width: 100%; border-collapse: collapse; font-size: .88rem; }
+#table-res th {
+  text-align: right; padding: 9px 12px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .7rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+#table-res td { text-align: right; padding: 8px 12px; border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent); }
+#table-res th:first-child, #table-res td:first-child { text-align: left; font-weight: 700; }
+#table-res tr.retenue { background: var(--ok-pastel); }
+#table-res tr.retenue td:first-child { color: var(--ok); }
+#table-res tr.retenue td:first-child::after { content: " — retenue"; font-weight: 400; font-size: .78rem; }
+#table-global { width: 100%; border-collapse: collapse; font-size: .88rem; }
+#table-global th {
+  text-align: right; padding: 9px 12px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .7rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+#table-global td { text-align: right; padding: 8px 12px; border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent); }
+#table-global th:first-child, #table-global td:first-child { text-align: left; font-weight: 700; }
+#table-global tr.depassee { background: var(--ko-pastel); }
+.taux { display: inline-grid; grid-template-columns: 46px 64px; gap: 8px; align-items: center; }
+.barre { height: 6px; background: var(--fond-2); overflow: hidden; }
+.barre i { display: block; height: 100%; }
+.verdict-ok, .verdict-ko { font-weight: 700; font-size: .8rem; }
+.verdict-ok { color: var(--ok); }
+.verdict-ko { color: var(--ko); }
+
+/* ---- 5. vérification Predim (Excel) ---- */
+.bloc-excel { margin-top: 34px; border-top: 1px solid var(--bord); padding-top: 24px; }
+.entete-excel { max-width: 640px; margin-bottom: 14px; }
+.note-excel { margin: 8px 0 0; color: var(--texte-2); font-size: .84rem; }
+.recap-excel {
+  margin-top: 14px; padding: 14px 18px; border: 1px solid var(--bord);
+  background: var(--fond-2); font-size: .86rem; max-width: 640px;
+}
+.recap-excel h4 {
+  margin: 0 0 8px; font-size: .72rem; text-transform: uppercase;
+  letter-spacing: .14em; color: var(--texte-2); font-weight: 600;
+}
+.recap-excel table { border-collapse: collapse; }
+.recap-excel td, .recap-excel th {
+  text-align: left; padding: 2px 18px 2px 0; font-size: .84rem; vertical-align: top;
+}
+.recap-excel th { color: var(--texte-2); font-weight: 500; white-space: nowrap; }
+.recap-excel .avertissements { margin: 10px 0 0; padding-left: 18px; color: var(--bleu-canard); }
+.recap-excel .avertissements li { margin: 2px 0; }
+
+footer {
+  border-top: 1px solid var(--filet);
+  text-align: center; color: var(--texte-2); padding: 22px; font-weight: 500;
+}
+
+/* ============ Performances v2 : cartes barres × permutations ============ */
+.note-v2 {
+  font-size: .88rem; color: var(--texte-2); line-height: 1.55;
+  border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 14px 0 4px;
+  max-width: 78ch;
+}
+.note-v2 strong { color: var(--texte); }
+.alerte-v2 {
+  display: block; margin: 8px 0; padding: 8px 12px;
+  background: var(--ko-pastel); color: var(--texte); font-weight: 600;
+}
+.marque-substitution { color: var(--avert); cursor: help; }
+#table-perf .cel-stab.substitue { background: var(--ko-pastel); }
+.note-cartes {
+  font-size: .82rem; color: var(--texte-2); line-height: 1.5;
+  margin: 8px 0 2px; max-width: 78ch;
+}
+
+/* 3 colonnes dans la largeur de contenu (~744 px) : les 7 cartes tiennent en
+   trois rangs, donc dans un écran, ce qui est tout l'objet de cette vue */
+.cartes-elu2 {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 16px; margin: 12px 0 4px;
+}
+.carte-elu2 { margin: 0; display: grid; gap: 6px; }
+.carte-elu2 figcaption {
+  display: flex; align-items: center; gap: 6px;
+  text-transform: uppercase; letter-spacing: .08em; font-size: .64rem; font-weight: 600;
+  white-space: nowrap;
+}
+.carte-elu2 .puce {
+  width: 11px; height: 11px; flex: 0 0 auto; border: 1px solid var(--bord);
+}
+/* la carte est dessinée sans lissage, un pixel = un bloc de cases. Le cadre est
+   BORNÉ en hauteur : sans cela, un modèle de 657 barres étire la page sur
+   plusieurs écrans et on perd la vue d'ensemble — en zoom, on défile dedans. */
+.cadre-carte {
+  border: 1px solid var(--bord); overflow: auto; background: var(--fond);
+  max-height: 260px;
+}
+.cadre-carte canvas {
+  display: block; image-rendering: pixelated; cursor: crosshair;
+}
+.info-carte {
+  font-size: .72rem; color: var(--texte-2); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; cursor: help;
+}
+.info-carte.inactif { font-style: italic; opacity: .7; }
+
+/* carte combinée : affichée en grand, sous les 7 petites cartes — c'est elle
+   qu'on regarde pour voir d'un coup d'œil le critère dimensionnant */
+.carte-combinee-bloc { margin: 20px 0 4px; }
+.titre-combinee {
+  font-size: .92rem; font-weight: 700; margin: 0 0 4px;
+}
+.carte-elu2-grande { max-width: 100%; }
+/* le cadre est borné et défile : le canvas à l'intérieur garde sa hauteur
+   explicite (fixée en JS, une ligne = un nombre de px fixe) sans jamais être
+   écrasé — c'est CE cadre qui scrolle, pas le canvas lui-même */
+.cadre-carte-grande { max-height: 75vh; overflow-y: auto; }
+.cadre-carte-grande canvas { width: 100%; display: block; }
+.legende-combinee {
+  display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 8px;
+  font-size: .78rem; color: var(--texte-2);
+}
+.legende-combinee .legende-item { display: flex; align-items: center; gap: 6px; }
+.legende-combinee .puce {
+  width: 11px; height: 11px; flex: 0 0 auto; border: 1px solid var(--bord);
+}
+
+#table-elu2 tbody tr.depassee { background: var(--ko-pastel); }
+#table-elu2 td.pire { color: var(--ko); font-weight: 700; }
+
+
+/* ======================================================================== */
+/*  appv2 — spécifique : groupes de barres et comparaison de critères        */
+/*  (le reste du fichier est la charte partagée avec app/, à l'identique)    */
+/* ======================================================================== */
+
+/* badge de version dans le titre */
+.version {
+  font-size: .62rem; letter-spacing: .16em; vertical-align: .32em;
+  color: var(--accent); font-weight: 800;
+}
+
+/* ---- combinaisons : encadré magenta seulement quand rien n'a été détecté
+   (dans ce cas c'est une action à mener), sobre sinon ---- */
+.bloc-combos.auto {
+  border-color: var(--bord); background: var(--fond-2);
+}
+.note-combos { margin: 0; color: var(--texte-2); font-size: .78rem; font-style: italic; }
+
+/* ---- choix du groupe : la maille de tout le raisonnement, donc mis en avant ---- */
+.bloc-groupe { min-width: 340px; max-width: 560px; }
+.bloc-groupe select { width: 100%; min-width: 0; }
+#sel-groupe { font-weight: 700; }
+#sel-groupe option:disabled { color: var(--texte-2); font-style: italic; }
+
+/* ---- contrôles de sélection (modèle, critères, groupe, coefficients de
+   stabilité) légèrement plus compacts que la charte de base ---- */
+#carte-modele select, #carte-modele input[type="number"],
+#ligne-groupe select, .bloc-coefs input, .bloc-coefs select {
+  padding: 7px 10px; font-size: .84rem;
+}
+#carte-modele select, #ligne-groupe select { min-width: 220px; }
+#carte-modele button, .bloc-coefs button { padding: 8px 16px; font-size: .72rem; }
+
+/* ---- coefficients de stabilité + longueurs de flambement/déversement ---- */
+.bloc-coefs {
+  border: 1px solid var(--bord); padding: 14px 18px; margin: 14px 0;
+  display: grid; gap: 10px;
+}
+/* encadrés ELU/ELS de la carte modèle (cf. .bloc-coefs, même style) */
+.encadre { border: 1px solid var(--bord); padding: 14px 18px; margin: 14px 0; }
+.encadre .champs-criteres { margin-top: 4px; }
+.champs-coefs { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+.champs-coefs .champ input { width: 64px; }
+.champs-coefs .champ input:disabled { opacity: .4; }
+#btn-longueur-element.actif {
+  background: var(--texte); color: white; border-color: var(--texte);
+}
+
+/* ---- critères comparés ---- */
+.bloc-criteres {
+  border: 1px solid var(--bord); padding: 14px 18px; margin: 14px 0;
+  display: grid; gap: 10px; background: var(--fond-2);
+}
+.champs-criteres { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.champs-criteres .case { margin: 0; }
+/* le critère de référence n'est pas décochable : grisé mais pas effacé */
+.case-fixe { cursor: default; color: var(--texte-2); }
+.case-fixe input { opacity: .55; }
+.note-criteres { margin: 0; color: var(--texte-2); font-size: .78rem; }
+
+/* ---- tableau : lignes plus fines (plus de colonnes qu'app/, profil plus
+   large) et en-têtes cliquables pour trier ---- */
+#table-perf th, #table-perf td { padding: 5px 10px; font-size: .8rem; }
+#table-perf td.mono:nth-child(2) { min-width: 150px; }
+#table-perf thead th { cursor: pointer; user-select: none; }
+#table-perf thead th:hover { color: var(--texte); }
+.fleche-tri { color: var(--accent); margin-left: 3px; font-size: .68rem; }
+
+#table-perf td.critere-retenu {
+  text-align: left; font-weight: 700; text-transform: lowercase;
+}
+#table-perf td.taux-retenu .taux { font-weight: 700; }
+/* colonnes de comparaison : discrètes, sauf celle qui a gagné la ligne */
+#table-perf td.taux-detail { color: var(--texte-2); font-size: .78rem; }
+#table-perf td.taux-detail.gagnant {
+  color: var(--texte); font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+#table-perf .indispo { font-style: italic; opacity: .6; cursor: help; }
+#table-perf tbody tr.selectionnee { outline: 1px solid var(--accent); }
+
+/* ---- invite : rien à afficher pour l'instant (aucun modèle chargé, aucune
+   optimisation lancée) — un encadré pointillé plutôt qu'un vide ---- */
+.a-venir {
+  border: 1px dashed var(--bord); padding: 22px 24px; margin: 0;
+  font-style: italic;
+}
+
+/* ======================================================================== */
+/*  Onglet « Opt. globale » — plusieurs familles, dans un ordre choisi       */
+/* ======================================================================== */
+
+/* titre d'encadré + case à cocher sur la même ligne (encadré Instabilité) */
+.entete-encadre {
+  display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap;
+  justify-content: space-between;
+}
+.entete-encadre .case { margin: 0; }
+/* instabilité décochée : l'encadré reste lisible mais visiblement hors calcul */
+.bloc-coefs.inactif .champs-coefs { opacity: .45; }
+
+/* ---- tableau des familles : sélection, ordre, longueurs par famille ---- */
+#table-familles-global { width: 100%; border-collapse: collapse; font-size: .86rem; }
+#table-familles-global th {
+  text-align: right; padding: 7px 10px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .68rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+#table-familles-global td {
+  text-align: right; padding: 5px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent);
+}
+#table-familles-global th:nth-child(-n+4),
+#table-familles-global td:nth-child(-n+4) { text-align: left; }
+#table-familles-global td:nth-child(3) { font-weight: 700; }
+#table-familles-global input[type="number"] { width: 68px; text-align: center;
+  padding: 4px 6px; font-size: .82rem; }
+/* famille décochée : lisible, mais clairement hors de l'optimisation */
+#table-familles-global tr.famille-exclue { opacity: .5; }
+/* colonnes d'instabilité masquées quand la case « prise en compte » l'est */
+#table-familles-global .col-stab[hidden] { display: none; }
+
+.cel-ordre { white-space: nowrap; }
+.cel-ordre .rang { display: inline-block; min-width: 18px; text-align: center;
+  font-weight: 700; }
+.btn-ordre {
+  border: 1px solid var(--bord); background: var(--fond); color: var(--texte);
+  cursor: pointer; padding: 1px 6px; font-size: .8rem; line-height: 1.2;
+}
+.btn-ordre:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-ordre:disabled { opacity: .25; cursor: default; }
+
+#bloc-familles-global .sous-titre, #bloc-algo-global .sous-titre {
+  margin: 6px 0 12px; max-width: 760px;
+}
+#desc-algo-global { margin-top: 8px; max-width: 760px; }
+
+/* ---- bilan par famille : une ligne par famille, mise à jour en continu ---- */
+#table-bilan-global { width: 100%; border-collapse: collapse; font-size: .86rem;
+  margin: 8px 0 26px; }
+#table-bilan-global th {
+  text-align: right; padding: 8px 12px; color: var(--texte-2); font-weight: 600;
+  border-bottom: 1px solid var(--filet); font-size: .7rem; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+#table-bilan-global td {
+  text-align: right; padding: 6px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--bord) 65%, transparent);
+}
+#table-bilan-global th:nth-child(-n+4),
+#table-bilan-global td:nth-child(-n+4) { text-align: left; }
+#table-bilan-global td:nth-child(2) { font-weight: 700; }
+#table-bilan-global .calcule { display: block; font-size: .76rem; }
+
+/* ---- journal des essais (réutilise la mise en page de #table-global de la
+   charte partagée ; les lignes ne sont pas cliquables ici) ---- */
+#table-global tbody tr { cursor: default; }
+#table-global tbody tr:hover { background: transparent; }
+#table-global th, #table-global td { padding: 5px 10px; font-size: .8rem; }
+/* section finalement gardée pour sa famille : c'est la ligne à retenir */
+#table-global tbody tr.retenue { background: color-mix(in srgb, var(--ok) 12%, transparent); }
+#table-global tbody tr.retenue td:nth-child(2) { color: var(--ok); font-weight: 700; }
+#table-global .cel-stab.substitue { background: var(--ko-pastel); }
+/* stabilité volontairement non vérifiée (case décochée) : pas un manque */
+.cel-stab.sans-stab { color: var(--texte-2); font-style: italic; font-size: .76rem; }
+
+
+/* ======================================================================== */
+/*  Disposition v3 — bandeau de chargement, colonne d'entrées, colonne de   */
+/*  sorties. Le reste du fichier est la charte partagée avec app_old/.       */
+/* ======================================================================== */
+
+/* ---- bandeau : chargement du modèle, en haut à droite ---- */
+.bandeau-modele { display: grid; gap: 2px; justify-items: end; min-width: 0; }
+.bandeau-modele .ligne-modele { flex-wrap: nowrap; align-items: center; }
+.bandeau-modele #sel-modele {
+  min-width: 240px; max-width: 320px; padding: 7px 10px; font-size: .84rem;
+}
+.bandeau-modele button { padding: 8px 18px; font-size: .72rem; }
+.bandeau-modele #zone-depot {
+  min-width: 150px; flex: 0 1 auto; padding: 6px 14px; font-size: .78rem;
+}
+.bandeau-modele .message { margin: 0; text-align: right; min-height: 1em; }
+
+/* ---- groupe étudié : épinglé au-dessus des onglets d'entrée ---- */
+.barre-groupe {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 0 10px; border-bottom: 1px solid var(--bord);
+}
+.barre-groupe .titre-option { color: var(--texte-2); white-space: nowrap; }
+.barre-groupe select {
+  flex: 1 1 240px; min-width: 0; font-weight: 700;
+  padding: 7px 10px; font-size: .84rem;
+}
+.barre-groupe select option:disabled { color: var(--texte-2); font-style: italic; }
+
+/* ---- onglets : entrées (gauche) et sorties (droite) ---- */
+.onglets-vues { margin-top: 0; }
+.onglets-sorties { margin-top: 0; flex: 0 0 auto; }
+.onglets-sorties .onglet { padding: 12px 18px; font-size: .74rem; }
+/* les sections d'un onglet n'ont plus besoin du filet du haut : l'onglet
+   lui-même sépare déjà */
+.vue > .etape, .sortie > .etape { border-top: 0; padding: 18px 0 30px; }
+.vue h2, .sortie h2 { margin-bottom: 16px; font-size: 1.05rem; }
+
+/* ---- colonne de sortie : en-tête du détail ---- */
+.entete-detail {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 0 10px; border-bottom: 1px solid var(--bord); margin-bottom: 12px;
+}
+.entete-detail .calcule { flex: 1 1 auto; }
+.entete-detail button { padding: 7px 14px; font-size: .68rem; }
+.bascule-detail { display: flex; border: 1px solid var(--bord); }
+.onglet-mini {
+  border: 0; background: var(--fond); color: var(--texte-2);
+  padding: 6px 14px; font-size: .68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em; cursor: pointer;
+}
+.onglet-mini + .onglet-mini { border-left: 1px solid var(--bord); }
+.onglet-mini:hover { color: var(--texte); }
+.onglet-mini.actif { background: var(--texte); color: #fff; }
+
+/* renvoi d'une colonne à l'autre : le résumé est à gauche, le détail à droite */
+.renvoi-detail {
+  margin: 18px 0 0; padding: 10px 14px; font-size: .82rem;
+  color: var(--texte-2); background: var(--fond-2);
+  border-left: 3px solid var(--acier-clair);
+}
+
+/* ---- tableaux détaillés : beaucoup de colonnes dans une demi-page ----
+   Ils défilent horizontalement dans leur cadre (.defilement) ; l'en-tête reste
+   visible quand on défile verticalement dans la colonne de sortie. */
+#table-optim, #table-global { font-size: .76rem; }
+#table-optim th, #table-optim td,
+#table-global th, #table-global td { padding: 4px 8px; white-space: nowrap; }
+#table-optim thead th, #table-global thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--fond);
+}
+#table-optim .taux, #table-global .taux { grid-template-columns: 40px 40px; gap: 5px; }
+/* section finalement gardée : c'est la ligne à retenir dans les deux tableaux */
+#table-optim tbody tr.retenue { background: color-mix(in srgb, var(--ok) 12%, transparent); }
+#table-optim tbody tr.retenue td:first-child { color: var(--ok); font-weight: 700; }
+/* la famille qui gouverne l'ELU n'est pas celle qu'on allège : à signaler */
+#table-global td.autre-famille { color: var(--accent); font-weight: 700; }
+/* stabilité volontairement non vérifiée (case décochée) : pas un manque */
+#table-optim td.cel-sans { color: var(--texte-2); font-style: italic; }
+
+/* ---- graphique de l'opt. globale (SVG écrit à la main, cf. app.js) ---- */
+#graphe-global svg { width: 100%; height: auto; display: block; }
+#graphe-global .axe { stroke: var(--filet); stroke-width: 1; }
+#graphe-global .grille { stroke: var(--bord); stroke-width: 1; stroke-dasharray: 2 4; }
+#graphe-global .ligne-depart {
+  stroke: var(--acier-clair); stroke-width: 1; stroke-dasharray: 5 3;
+}
+#graphe-global .etiquette {
+  fill: var(--texte-2); font-size: 10px;
+  font-family: Consolas, "Cascadia Mono", monospace;
+}
+#graphe-global .pt-ok { fill: var(--ok); }
+#graphe-global .pt-ko { fill: var(--ko); opacity: .5; }
+#graphe-global .ligne-best { fill: none; stroke: var(--texte); stroke-width: 1.5; }
+.graphe-progression figcaption { font-size: .78rem; }
+.pt-legende { font-size: .9rem; vertical-align: -1px; }
+.pt-legende.ok { color: var(--ok); }
+.pt-legende.ko { color: var(--ko); opacity: .6; }
+
+/* ---- invites (aucun modèle chargé, aucune optimisation lancée) ---- */
+.a-venir { color: var(--texte-2); font-size: .86rem; }
+
+/* ---- ajustements de densité (5 onglets d'entrée sur une demi-page) ---- */
+.onglets-vues .onglet { padding: 10px 13px; font-size: .74rem; letter-spacing: .08em; }
+/* le dépôt tient sur une ligne dans le bandeau : sans nowrap il s'étire sur
+   trois lignes et déséquilibre l'entête */
+.bandeau-modele #zone-depot { white-space: nowrap; display: block; text-align: center; }
+
+/* écran étroit : le bandeau passe SOUS la marque et prend toute la largeur —
+   sinon la ligne « modèle + Charger + dépôt », en nowrap, déborde de la page
+   (mesuré : 23 px de trop à 1100 px de large) */
+@media (max-width: 1180px) {
+  header { flex-wrap: wrap; }
+  .bandeau-modele { width: 100%; justify-items: stretch; }
+  .bandeau-modele .ligne-modele { flex-wrap: wrap; }
+  .bandeau-modele #sel-modele { max-width: none; flex: 1 1 240px; }
+  .bandeau-modele .message { text-align: left; }
+}
+
+/* ---- Wiki (02/09/2026) : page de notes de projet, un onglet par fichier
+   .md du dossier Wiki/, recouvre toute la page sans réinitialiser l'app ---- */
+.marque { display: flex; align-items: center; gap: 20px; }
+#btn-wiki { align-self: center; }
+.wiki-overlay {
+  position: fixed; inset: 0; z-index: 50; background: var(--fond);
+  display: flex; flex-direction: column;
+}
+.wiki-cadre { display: flex; flex-direction: column; height: 100%; }
+.wiki-entete {
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--bord); padding: 0 34px;
+}
+.wiki-entete .onglets { border-bottom: 0; }
+.wiki-corps { flex: 1; overflow-y: auto; padding: 34px; max-width: 900px; margin: 0 auto; width: 100%; }
+.wiki-contenu h1, .wiki-contenu h2, .wiki-contenu h3 {
+  font-family: Gilroy, "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--texte);
+}
+.wiki-contenu h1 { font-size: 1.6rem; border-bottom: 1px solid var(--bord); padding-bottom: 10px; }
+.wiki-contenu h2 { font-size: 1.25rem; margin-top: 2em; }
+.wiki-contenu h3 { font-size: 1.05rem; }
+.wiki-contenu p, .wiki-contenu li { color: var(--texte); line-height: 1.7; }
+.wiki-contenu code {
+  font-family: Consolas, "Cascadia Mono", monospace; font-size: .88em;
+  background: var(--fond-2); padding: .1em .35em; border: 1px solid var(--bord);
+}
+.wiki-contenu pre {
+  background: var(--fond-2); border: 1px solid var(--bord); padding: 14px;
+  overflow-x: auto;
+}
+.wiki-contenu pre code { border: 0; padding: 0; background: none; }
+.wiki-contenu a { color: var(--bleu-canard); }
+.wiki-contenu blockquote {
+  margin: 0; padding-left: 16px; border-left: 3px solid var(--acier-clair);
+  color: var(--texte-2);
+}
