@@ -1345,17 +1345,24 @@ def _extraire(job: JobElu) -> None:
                               "my_debut_milieu_fin": my_dmf, "mz_debut_milieu_fin": mz_dmf,
                               "combinaison_gouvernante": lib_gouv,
                               "position_gouvernante_pct": positions_pct(eff.shape[1])[pos_g]}
+                        # colonnes d'efforts/combinaison de la stabilite du tableau
+                        # detaille (onglet Performances) — memes noms de cles que
+                        # les onglets Optimisation/Opt. globale (`_prefixer`), pour
+                        # que `celulesEfforts`/`celluleLieu` cote page marchent SANS
+                        # code specifique (cf. app.js)
+                        extra = {"combinaison": lib_gouv,
+                                 **_prefixer("stab", _valeurs_torseur(eff, perm_g, pos_g))}
                         try:
                             entree_dict, note = _entrees_classeur(
                                 bt, nuance, job.coefs_stabilite, job.longueur_par_element)
                             entree = {"element": eid, **entree_dict}
-                            job.torseurs.put((eid, entree, None, note))
+                            job.torseurs.put((eid, entree, None, note, extra))
                         except DimensionnementError as ex:
-                            job.torseurs.put((eid, None, str(ex), None))
+                            job.torseurs.put((eid, None, str(ex), None, extra))
                     else:
                         job.torseurs.put((eid, None,
                             "Aucun critère ELU actif calculable sur cette barre : "
-                            "combinaison dimensionnante indéterminée.", None))
+                            "combinaison dimensionnante indéterminée.", None, None))
 
                 with job.lock:
                     job.lignes.extend(lignes)
@@ -1398,10 +1405,10 @@ def _stabilite(job: JobElu) -> None:
             item = job.torseurs.get()
             if item is None or job.stop.is_set():
                 break
-            eid, entree, erreur, note = item
+            eid, entree, erreur, note, extra = item
             if erreur is not None:
                 with job.lock:
-                    job.stab[eid] = {"element": eid, "erreur": erreur}
+                    job.stab[eid] = {"element": eid, "erreur": erreur, **(extra or {})}
                 continue
             if session is None:
                 session = _session_stabilite()
@@ -1413,6 +1420,10 @@ def _stabilite(job: JobElu) -> None:
             # son onglet) n'ayant plus lieu d'etre
             if note and not r.get("erreur") and not r.get("profil_substitue"):
                 r["profil_substitue"] = note
+            # colonnes d'efforts/combinaison de la stabilite (tableau detaille
+            # de l'onglet Performances), cf. leur calcul dans `_extraire`
+            if extra:
+                r.update(extra)
             with job.lock:
                 job.stab[eid] = r
     except BaseException as e:                                  # noqa: BLE001

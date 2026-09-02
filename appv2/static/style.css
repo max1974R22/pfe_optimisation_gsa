@@ -615,8 +615,8 @@ footer {
    large) et en-têtes cliquables pour trier ---- */
 #table-perf th, #table-perf td { padding: 5px 10px; font-size: .8rem; }
 #table-perf td.mono:nth-child(2) { min-width: 150px; }
-#table-perf thead th { cursor: pointer; user-select: none; }
-#table-perf thead th:hover { color: var(--texte); }
+#table-perf thead th[data-cle] { cursor: pointer; user-select: none; }
+#table-perf thead th[data-cle]:hover { color: var(--texte); }
 .fleche-tri { color: var(--accent); margin-left: 3px; font-size: .68rem; }
 
 #table-perf td.critere-retenu {

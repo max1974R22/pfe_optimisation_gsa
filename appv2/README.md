@@ -537,3 +537,33 @@ formule, principe du dépôt) :
   COM des cellules D31:D33 elles-mêmes n'a pas pu être refaite dans cette
   session (classeur ouvert par le serveur de prévisualisation, hors de portée
   du process qui a servi à la vérification COM du 01/09 ci-dessus).
+- **Tableau détaillé de l'onglet Performances, aligné sur celui du détail
+  Optimisation (02/09)** : `table-perf` n'affichait, par barre, que la
+  combinaison/le critère/le taux ELU retenus et le taux de stabilité global —
+  le torseur (N/Vy/Vz/Mxx/My/Mz) et les quatre taux §6.3 séparés n'étaient
+  visibles qu'en infobulle. Il porte désormais les mêmes colonnes que
+  `table-optim`/`table-global` : 6 colonnes d'efforts ELU (déjà connues de
+  `_bloc_critere`, aucun changement serveur) + cas/combinaison/6 efforts/lieu
+  de la case qui gouverne la stabilité + les 4 taux §6.3 séparés
+  (Flambement/Déversement/Fléchi+comprimé yy/zz), en plus du taux global et de
+  la classe déjà affichés — colonnes « Barre ELU »/« Barre stab. » omises
+  (redondantes : la ligne EST déjà une barre). Contrairement aux onglets
+  d'optimisation, la combinaison de stabilité coïncide TOUJOURS avec la
+  combinaison ELU dimensionnante (`_extraire` ne vérifie la stabilité qu'à la
+  case ELU retenue, pas d'« approfondie » ici) — documenté en infobulle sur
+  l'en-tête plutôt que masqué. Côté serveur (`JobElu._extraire`/`_stabilite`),
+  `job.stab[eid]` porte maintenant aussi `combinaison`/`stab_N_kN`… (mêmes clés
+  que `_prefixer`/`_valeurs_torseur`, réutilisées telles quelles par
+  `celulesEfforts`/`celluleLieu` côté page). `appliquerStabilite` (patch
+  incrémental des cellules quand la stabilité arrive après l'ELU) a été
+  simplifié : il régénère la ligne entière (`ligneHTML`) au lieu de patcher
+  deux cellules — nécessaire puisque la stabilité alimente désormais une
+  dizaine de cellules, pas deux. Export CSV (« Exporter (Excel) ») étendu aux
+  mêmes colonnes. Vérifié **en marche** dans le navigateur de prévisualisation
+  (pas seulement lu) : `Poutre ISO.gwb` (1 barre) — taux stabilité 6,261 =
+  max(0 / 3,283 / 4,905 / 6,261), cas affiché « Fléchi + comprimé zz »,
+  cohérent ; `Pratt_1.gwb`, groupe « toutes les barres acier » (21 barres,
+  streaming par paquets + stabilité en parallèle) — 21/21 lignes cohérentes
+  (ex. barre 7 : taux 0,914 = max(0,808/0,103/0,914/0,904), cas « Fléchi +
+  comprimé yy »), sélection de ligne et panneau Excel toujours fonctionnels,
+  export CSV sans erreur, aucune erreur console dans les deux cas.
