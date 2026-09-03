@@ -11,8 +11,8 @@ Desormais, c'est le modele qui porte les criteres : ils sont declares en
 NOMMANT des noeuds dans GSA, et l'utilisateur ne renseigne que la direction
 comparee et la limite en millimetres.
 
-DEUX FAMILLES DE CRITERES
--------------------------
+TROIS FAMILLES DE CRITERES
+---------------------------
 `ELS_glob_X`  — deplacement GLOBAL. Tous les noeuds portant ce nom (X = un
     indice libre, un chiffre en general : plusieurs criteres globaux
     differents peuvent coexister) doivent avoir un deplacement inferieur a la
@@ -43,6 +43,33 @@ DEUX FAMILLES DE CRITERES
     une inconnue). Pour trois noeuds regulierement espaces, t = 0,5 et l'ecart
     redonne la fleche relative usuelle u_C - (u_A + u_B) / 2.
 
+`ELS_drift_X` — deplacement RELATIF entre DEUX noeuds portant le meme nom :
+    le drift inter-etage (« inner storey displacement »). Ce qui est compare
+    a la limite n'est pas le deplacement absolu d'un plancher mais l'ECART
+    entre les deplacements des deux planchers consecutifs, dans la direction
+    choisie (typiquement horizontale, x ou y) :
+
+        ecart = u_d(haut) - u_d(bas)
+
+    Le HAUT et le BAS sont identifies par la cote z (le plus grand z est le
+    haut) — PAS par l'ordre de numerotation des noeuds, meme parti pris que
+    pour le milieu/les extremites d'un critere 3pts. La hauteur d'etage
+    correspondante (|z_haut - z_bas|, en m) est calculee et exposee
+    (`hauteur_etage_m`) a titre indicatif — le critere reste compare a
+    `limite_mm` comme les deux autres familles (PAS un ratio h/xxx calcule
+    automatiquement) : c'est a l'utilisateur d'y reporter la valeur en mm
+    voulue (ex. hauteur d'etage / 300).
+
+    Deux planchers qui se deplacent EXACTEMENT PAREIL (translation
+    d'ensemble, aucun « racking » de l'etage) ne consomment rien de ce
+    critere, contrairement a `ELS_glob_X` qui, applique separement a chacun,
+    peut deja etre depasse alors que l'etage ne se deforme pas — c'est
+    justement ce qu'un critere de drift ajoute par rapport a un deplacement
+    absolu (cf. la discussion qui a precede ce module : un grand deplacement
+    cumule en tete de structure peut masquer, ou a l'inverse un etage souple
+    concentrer, une deformation relative dangereuse qu'un critere global ne
+    voit pas).
+
 TOUTES LES PERMUTATIONS
 -----------------------
 Les deplacements sont lus par PERMUTATION
@@ -72,9 +99,9 @@ from commun.gsa_bridge.permutations import deplacements_noeuds_par_permutation
 # rien n'interdit 'facade' ou '2b') : il distingue plusieurs criteres de la
 # meme famille. Insensible a la casse — GSA n'impose rien sur la casse des noms
 # de noeuds, et un modele reel melange 'ELS_glob_1' et 'els_glob_1'.
-MOTIF = re.compile(r"^\s*ELS_(glob|3pts)_(\S+?)\s*$", re.IGNORECASE)
+MOTIF = re.compile(r"^\s*ELS_(glob|3pts|drift)_(\S+?)\s*$", re.IGNORECASE)
 
-TYPES = ("glob", "3pts")
+TYPES = ("glob", "3pts", "drift")
 
 # direction comparee : axe GLOBAL du modele (les deplacements nodaux sont lus
 # sans axe de sortie, donc dans le repere global). Valeur -> indice de colonne
@@ -113,6 +140,20 @@ def _milieu_et_extremites(pts: list[tuple[int, tuple[float, float, float]]]
     return pts[k][0], [pts[i][0], pts[j][0]], min(max(t, 0.0), 1.0)
 
 
+def _haut_bas(pts: list[tuple[int, tuple[float, float, float]]]
+             ) -> tuple[int, int, float]:
+    """(noeud du haut, noeud du bas, hauteur d'etage en m) pour un critere
+    drift — le HAUT est le noeud de plus grande cote z (meme axe vertical que
+    la direction par defaut de ELS_glob), le BAS l'autre. Leve `ElsError` si
+    les deux noeuds sont a la meme cote z (hauteur d'etage nulle,
+    indeterminee)."""
+    (id1, p1), (id2, p2) = pts[0], pts[1]
+    h = p1[2] - p2[2]
+    if abs(h) <= 0:
+        raise ElsError("les deux noeuds sont a la meme cote z : hauteur d'etage nulle")
+    return (id1, id2, h) if h > 0 else (id2, id1, -h)
+
+
 def criteres_du_modele(m) -> list[dict]:
     """Criteres ELS declares dans le modele, deduits des NOMS de ses noeuds.
 
@@ -149,6 +190,18 @@ def criteres_du_modele(m) -> list[dict]:
                     milieu, extremites, t = _milieu_et_extremites(
                         [(t_[0], t_[1]) for t_ in trouves])
                     c.update(milieu=milieu, extremites=extremites, t=round(t, 4))
+                except ElsError as e:
+                    c["probleme"] = f"{nom} : {e}"
+        elif type_ == "drift":
+            if len(noeuds) != 2:
+                c["probleme"] = (
+                    f"Le nom {nom!r} est porté par {len(noeuds)} nœud(s) : un "
+                    "critère de drift inter-étage en demande exactement 2 "
+                    "(les deux planchers consécutifs).")
+            else:
+                try:
+                    haut, bas, h_m = _haut_bas([(t_[0], t_[1]) for t_ in trouves])
+                    c.update(haut=haut, bas=bas, hauteur_etage_m=round(h_m, 4))
                 except ElsError as e:
                     c["probleme"] = f"{nom} : {e}"
         criteres.append(c)
@@ -279,6 +332,28 @@ def _evaluer_3pts(c: dict, dep: dict[int, np.ndarray],
             "perm": ip, "libelle": _libelle(libelles, ip)}
 
 
+def _evaluer_drift(c: dict, dep: dict[int, np.ndarray],
+                   libelles: list[str] | None) -> dict | None:
+    """Plus grand |deplacement relatif haut - bas| sur toutes les
+    permutations — le drift inter-etage, dans la direction choisie (une
+    translation d'ensemble des deux planchers, meme grande, ne consomme rien
+    du critere : seul l'ECART compte)."""
+    i = DIRECTIONS[c["direction"]]
+    haut, bas = dep.get(c["haut"]), dep.get(c["bas"])
+    if haut is None or bas is None:
+        return None
+    n = min(haut.shape[0], bas.shape[0])
+    if n == 0:
+        return None
+    ecart = haut[:n, i] - bas[:n, i]
+    fini = np.isfinite(ecart)
+    if not fini.any():
+        return None
+    ip = int(np.argmax(np.where(fini, np.abs(ecart), -1.0)))
+    return {"valeur_mm": abs(float(ecart[ip])) * 1000.0, "noeud": c["haut"],
+            "perm": ip, "libelle": _libelle(libelles, ip)}
+
+
 def evaluer(resultat, criteres: list[dict],
             libelles: list[str] | None = None,
             coefficient: float = 1.0) -> list[dict]:
@@ -310,9 +385,17 @@ def evaluer(resultat, criteres: list[dict],
         if c["type"] == "3pts":
             ligne["milieu"] = c.get("milieu")
             ligne["extremites"] = c.get("extremites")
+        elif c["type"] == "drift":
+            ligne["haut"] = c.get("haut")
+            ligne["bas"] = c.get("bas")
+            ligne["hauteur_etage_m"] = c.get("hauteur_etage_m")
         if exploitable(c):
-            d = _evaluer_3pts(c, dep, libelles) if c["type"] == "3pts" \
-                else _evaluer_glob(c, dep, libelles)
+            if c["type"] == "3pts":
+                d = _evaluer_3pts(c, dep, libelles)
+            elif c["type"] == "drift":
+                d = _evaluer_drift(c, dep, libelles)
+            else:
+                d = _evaluer_glob(c, dep, libelles)
             if d is None:
                 ligne["probleme"] = ("aucun deplacement exploitable sur ces "
                                      "noeuds sous cette combinaison")

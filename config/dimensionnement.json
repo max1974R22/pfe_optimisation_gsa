@@ -17,7 +17,7 @@
   },
 
   "critere_els": {
-    "_commentaire": "ELS : les criteres ne sont plus une fleche L/denominateur mais des DEPLACEMENTS DE NOEUDS NOMMES DANS LE MODELE (cf. commun/els_noeuds.py). Un noeud nomme 'ELS_glob_X' impose que son deplacement reste sous la limite dans la direction choisie ; TROIS noeuds nommes 'ELS_3pts_X' imposent que l'ecart du point du milieu a la corde de ses deux extremites reste sous la limite. Les criteres sont DECOUVERTS dans le modele : ce bloc ne fait que fixer, par nom de critere, la direction ('x', 'y' ou 'z' - axes globaux) et la limite en mm. Un critere present dans le modele mais absent d'ici prend les valeurs par defaut (defauts ci-dessous) ; l'interface web les regle a la main, sans passer par ce fichier.",
+    "_commentaire": "ELS : les criteres ne sont plus une fleche L/denominateur mais des DEPLACEMENTS DE NOEUDS NOMMES DANS LE MODELE (cf. commun/els_noeuds.py). Un noeud nomme 'ELS_glob_X' impose que son deplacement reste sous la limite dans la direction choisie ; TROIS noeuds nommes 'ELS_3pts_X' imposent que l'ecart du point du milieu a la corde de ses deux extremites reste sous la limite ; DEUX noeuds nommes 'ELS_drift_X' imposent que l'ecart de deplacement entre les deux (le drift inter-etage) reste sous la limite. Les criteres sont DECOUVERTS dans le modele : ce bloc ne fait que fixer, par nom de critere, la direction ('x', 'y' ou 'z' - axes globaux) et la limite en mm. Un critere present dans le modele mais absent d'ici prend les valeurs par defaut (defauts ci-dessous) ; l'interface web les regle a la main, sans passer par ce fichier.",
     "coefficient": 1.0,
     "defauts": {"direction": "z", "limite_mm": 20},
     "criteres": {

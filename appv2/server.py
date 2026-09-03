@@ -70,8 +70,8 @@ ELU — la barre gouvernante en stabilite peut differer).
 
 ELS PAR NOEUDS NOMMES. Le critere de service n'est plus une fleche de barre
 comparee a L/denominateur : ce sont des DEPLACEMENTS DE NOEUDS que le modele
-declare lui-meme en les NOMMANT (`ELS_glob_X`, `ELS_3pts_X` — cf.
-commun/els_noeuds.py). La page ne renseigne, par critere trouve, que la
+declare lui-meme en les NOMMANT (`ELS_glob_X`, `ELS_3pts_X`, `ELS_drift_X` —
+cf. commun/els_noeuds.py). La page ne renseigne, par critere trouve, que la
 direction comparee et la limite en mm. Consequence sur l'affichage : l'ELS
 n'est plus une colonne du tableau par barre (il ne porte pas sur les barres)
 mais un tableau a lui, qualifiant la structure entiere.
@@ -453,7 +453,7 @@ def refs_elu_els(m, elu: str = "", els: str = "") -> dict:
     pour ce seul bilan n'aurait pas de sens.
 
     UNE SEULE combinaison ELS : tous les criteres nodaux du modele
-    (ELS_glob_X, ELS_3pts_X) sont verifies sous celle-ci.
+    (ELS_glob_X, ELS_3pts_X, ELS_drift_X) sont verifies sous celle-ci.
 
     Une combinaison explicitement choisie est validee contre le modele ; sinon
     elle est detectee par NOM (config/dimensionnement.json).
@@ -474,8 +474,9 @@ def refs_elu_els(m, elu: str = "", els: str = "") -> dict:
 
 
 def _criteres_els(m, reglages: dict | None = None) -> list[dict]:
-    """Criteres de service du modele (noeuds nommes ELS_glob_X / ELS_3pts_X),
-    regles par la page (`reglages`) ou, a defaut, par config/dimensionnement.json.
+    """Criteres de service du modele (noeuds nommes ELS_glob_X / ELS_3pts_X /
+    ELS_drift_X), regles par la page (`reglages`) ou, a defaut, par
+    config/dimensionnement.json.
 
     Les reglages de la page l'emportent sur ceux du fichier : l'encadre ELS
     est le pilote normal de ces limites, la configuration ne servant que de
