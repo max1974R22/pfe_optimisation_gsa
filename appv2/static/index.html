@@ -290,6 +290,11 @@
           <input type="checkbox" id="chk-stab-approfondie">
           stabilité approfondie (toutes les barres × toutes les permutations × toutes les positions)
         </label>
+        <label class="case" for="chk-optim-elu-tout"
+               title="Coché (défaut) : le critère de contrainte ELU est vérifié sur TOUTES les barres acier du modèle, pas seulement sur le groupe optimisé — alléger ce groupe redistribue les efforts, et une autre famille déjà limite peut devenir insuffisante sans que rien ne le signale. Décocher n'a de sens que sur une structure ISOSTATIQUE, où cette redistribution n'existe pas : la vérification se limite alors au groupe. Seul l'ELU est étendu aux autres familles, pas la stabilité (ses longueurs de flambement ne sont saisies que pour le groupe optimisé). L'ELS, nodal, est global : il est vérifié dans tous les cas. Coût : l'extraction grandit avec le nombre de barres du modèle.">
+          <input type="checkbox" id="chk-optim-elu-tout" checked>
+          vérifier l'ELU sur toutes les familles acier
+        </label>
       </div>
       <p id="msg-optim" class="message"></p>
 
@@ -352,8 +357,8 @@
         </div>
         <div class="champs-coefs">
           <label class="case" for="chk-global-elu-tout"
-                 title="Décoché (défaut) : l'ELU n'est vérifié que sur les familles cochées ci-dessus. Coché : sur TOUTES les familles acier du modèle, y compris celles qu'on n'optimise pas mais qui subissent la redistribution des efforts — plus sûr, mais l'extraction coûte proportionnellement au nombre de barres.">
-            <input type="checkbox" id="chk-global-elu-tout">
+                 title="Coché (défaut) : l'ELU est vérifié sur TOUTES les familles acier du modèle, y compris celles qu'on n'optimise pas mais qui subissent la redistribution des efforts. Décocher n'a de sens que sur une structure ISOSTATIQUE, où alléger une famille ne redistribue rien vers les autres : l'ELU n'est alors vérifié que sur les familles cochées ci-dessus. Sur une structure hyperstatique, décocher peut valider une section qui met une autre famille en défaut. Coût : l'extraction grandit avec le nombre de barres.">
+            <input type="checkbox" id="chk-global-elu-tout" checked>
             vérifier l'ELU sur toutes les familles acier
           </label>
           <label class="case" for="chk-global-stab-approfondie"
@@ -494,6 +499,7 @@
             <th>Critère ELS</th>
             <th>Nœud<br>ELS</th>
             <th>Combinaison<br>ELS</th>
+            <th title="Pire taux ELU des AUTRES familles acier, si la case « vérifier l'ELU sur toutes les familles acier » est cochée — survoler une valeur pour voir la barre et la famille concernées. Vide si la case est décochée.">Taux ELU<br>autres familles</th>
             <th>ELU+ELS</th>
             <th>Taux<br>stabilité</th>
             <th>Cas de<br>stabilité</th>

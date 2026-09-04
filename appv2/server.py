@@ -1556,7 +1556,8 @@ class JobOptim:
                  stabilite_approfondie: bool = False,
                  avec_stabilite: bool = True,
                  coefficient_els: float = 1.0,
-                 coefficient_stabilite: float = 1.0):
+                 coefficient_stabilite: float = 1.0,
+                 elu_perimetre_complet: bool = True):
         self.nom = nom
         self.elu = elu
         self.els = els
@@ -1579,6 +1580,18 @@ class JobOptim:
         # True = TOUTES les barres du groupe, sur TOUTES leurs permutations ET
         # TOUTES leurs positions -- exhaustif (cf. _extraire_optim)
         self.stabilite_approfondie = stabilite_approfondie
+        # case « vérifier l'ELU sur toutes les familles acier », COCHEE PAR
+        # DEFAUT : alleger le groupe REDISTRIBUE les efforts sur tout le modele
+        # (la reanalyse GSA est reelle), donc une autre famille deja limite peut
+        # devenir insuffisante — sans cette verification, rien ne le signale.
+        # La decocher ne se justifie que sur une structure ISOSTATIQUE, ou cette
+        # redistribution n'existe pas : la verification se limite alors au
+        # groupe. Volontairement l'ELU SEUL : la stabilite EC3 reste limitee au
+        # groupe (elle depend de longueurs de flambement propres a chaque
+        # famille, cf. `coefs_stabilite`/`longueur_par_element`, qui ne sont
+        # saisies que pour le groupe optimise). L'ELS, lui, est nodal donc deja
+        # global — verifie dans tous les cas.
+        self.elu_perimetre_complet = elu_perimetre_complet
         self.lock = threading.Lock()
         self.stop = threading.Event()
         self.candidats: list[dict] = []     # une ligne par section catalogue plus legere
@@ -1677,6 +1690,16 @@ def _extraire_optim(job: JobOptim) -> None:
                 raise DimensionnementError("Aucune barre acier dans ce groupe.")
             ids = [e["element"] for e in elements]
             sel = " ".join(str(i) for i in ids)
+            # barres acier des AUTRES familles (cf. job.elu_perimetre_complet) :
+            # elles ne changent pas de section, mais leurs efforts changent a
+            # chaque candidat (redistribution). ELU seulement, jamais stabilite.
+            autres = sorted(
+                (e for e in m.elements()
+                 if not e["factice"] and e["type"] in TYPES_1D
+                 and e["propriete"] != job.section_id
+                 and e["propriete"] in sections),
+                key=lambda e: e["element"]) if job.elu_perimetre_complet else []
+            sel_autres = " ".join(str(e["element"]) for e in autres)
             longueurs = {e["element"]: round(e["longueur_m"], 3) for e in elements}
             job.longueurs = longueurs
             temoin = elements[0]["element"]
@@ -1749,6 +1772,8 @@ def _extraire_optim(job: JobOptim) -> None:
                               if sec_actuelle.get("fy_Pa") else None,
                     "avec_stabilite": job.avec_stabilite,
                     "stabilite_approfondie": job.stabilite_approfondie,
+                    "elu_perimetre_complet": job.elu_perimetre_complet,
+                    "nb_barres_autres": len(autres),
                     # nuance du modele (lue une fois, valable pour tous les
                     # candidats) : sert a `ouvrir_excel_candidat`, qui pre-remplit
                     # le classeur SANS rouvrir GSA — cf. son docstring
@@ -1859,6 +1884,30 @@ def _extraire_optim(job: JobOptim) -> None:
                                 taux_elu_max, elem_gouv, critere_gouv = b["taux"], eid, c
                                 perm_gouv, pos_gouv, signe_gouv = b["perm"], b["position"], b.get("signe")
 
+                # ELU des AUTRES familles (case « toutes les familles ») :
+                # meme critere que pour le groupe, mais CHAQUE barre garde sa
+                # propre section (inchangee) — seuls ses efforts ont bouge.
+                taux_autres, elem_autres, critere_autres, famille_autres = None, None, None, None
+                if autres:
+                    efforts_autres = efforts_par_permutation(resultat, sel_autres, POSITIONS)
+                    pire_autres = 0.0
+                    for e in autres:
+                        eff_a = efforts_autres.get(e["element"])
+                        if eff_a is None or not eff_a.size:
+                            continue
+                        retenu_a = _critere_retenu(
+                            criteres_dimensionnants(eff_a, None, sections[e["propriete"]]),
+                            CRITERES_OPTIM)
+                        if retenu_a is None:
+                            continue
+                        c_a, b_a = retenu_a
+                        if b_a["taux"] > pire_autres:
+                            pire_autres = b_a["taux"]
+                            elem_autres, critere_autres = e["element"], c_a
+                            famille_autres = (sections[e["propriete"]].get("nom")
+                                             or f"section {e['propriete']}")
+                    taux_autres = round(pire_autres, 4)
+
                 taux_els_candidat = els_candidat["taux"]
                 els_gouv = els_candidat["gouvernant"]
 
@@ -1877,6 +1926,8 @@ def _extraire_optim(job: JobOptim) -> None:
                 # aucun critere de service verifiable (modele sans noeud nomme
                 # ELS_*) : le candidat n'est pas recale pour autant
                 ok_els = taux_els_candidat is None or taux_els_candidat <= job.coefficient_els
+                # meme seuil que le groupe : c'est le meme critere de contrainte
+                ok_autres = taux_autres is None or taux_autres <= job.coefficient
                 ligne = {
                     **base_ligne,
                     "taux_elu": round(taux_elu_max, 4), "critere_elu": critere_gouv,
@@ -1888,7 +1939,11 @@ def _extraire_optim(job: JobOptim) -> None:
                     "combinaison_els": els_gouv["libelle"] if els_gouv else None,
                     "noeud_gouvernant_els": els_gouv["noeud"] if els_gouv else None,
                     "criteres_els": els_candidat["criteres"],
-                    "verdict_elu_els": bool(ok_elu and ok_els),
+                    "taux_elu_autres": taux_autres,
+                    "element_autres_gouvernant": elem_autres,
+                    "critere_elu_autres": critere_autres,
+                    "famille_autres_gouvernante": famille_autres,
+                    "verdict_elu_els": bool(ok_elu and ok_els and ok_autres),
                 }
                 with job.lock:
                     job.candidats.append(ligne)
@@ -2042,7 +2097,10 @@ def optim_demarrer(params: dict) -> dict:
                    coefs_stabilite, longueur_par_element,
                    bool(params.get("stabilite_approfondie")),
                    params.get("avec_stabilite", True) is not False,
-                   coefficient_els, coefficient_stabilite)
+                   coefficient_els, coefficient_stabilite,
+                   # coche par defaut cote page (cf. JobOptim) : absente de la
+                   # requete, on retient le perimetre COMPLET, le cas sur
+                   params.get("elu_perimetre_complet", True) is not False)
     jid = uuid.uuid4().hex
     with OPTIM_JOBS_LOCK:
         for k in [k for k, j in OPTIM_JOBS.items() if j.etat != "en_cours"]:
@@ -2104,13 +2162,31 @@ def charger_section_optim(params: dict) -> dict:
         # ne touche jamais a la section d'une autre famille de barres
         prop_id = m.section_dediee(elements, nom="Optim") if elements else section_id
         m.set_section_profile(prop_id, profil_gsa)
+        # RE-ANALYSE AVANT D'ENREGISTRER : changer une section invalide les
+        # resultats deja stockes dans le modele (cf. GsaModel.set_section_profile).
+        # Sans cela, le .gwb enregistre porte la NOUVELLE section mais les
+        # ANCIENS resultats — a l'ouverture dans GSA, deplacements et
+        # contraintes sont ceux de la section precedente, jusqu'a ce que
+        # l'utilisateur relance l'analyse a la main.
+        avertissement = None
+        timings = m.analyse()
+        if not all(t["ok"] for t in timings):
+            avertissement = ("Section appliquée et fichier enregistré, mais "
+                             "l'analyse GSA a échoué : les résultats du fichier "
+                             "ne correspondent pas à cette section — relancer "
+                             "l'analyse dans GSA.")
         m.save_to(destination)
 
     reponse = {"ok": True, "modele": destination.name, "modeles": liste_modeles()}
+    if avertissement:
+        reponse["avertissement"] = avertissement
     try:
         os.startfile(destination)                  # ouvre avec GSA (association Windows)
     except OSError as ex:
-        reponse["avertissement"] = f"Fichier enregistré mais l'ouverture a échoué : {ex}"
+        # ne pas ecraser un avertissement d'analyse deja pose
+        reponse["avertissement"] = " ".join(filter(None, [
+            reponse.get("avertissement"),
+            f"Fichier enregistré mais l'ouverture a échoué : {ex}"]))
     return reponse
 
 
@@ -2509,10 +2585,15 @@ class _CtxGlobal:
         candidat essaye, qui vient d'echouer."""
         profil = (retenue.get("profil_gsa") or retenue["nom"]) if retenue \
             else f["profil_initial"]
+        echec_analyse = False
         if f.get("_dernier_profil") != profil:
             self.m.set_section_profile(f["prop_id"], profil)
             f["_dernier_profil"] = profil
-            self.m.analyse()
+            # le succes de CETTE analyse doit etre verifie comme celui des
+            # autres : les familles suivantes travaillent sur l'etat du modele
+            # laisse ici, et `m._result()` renverrait sinon les resultats de la
+            # section PRECEDENTE sans que rien ne le signale
+            echec_analyse = not all(t["ok"] for t in self.m.analyse())
         masse = float(retenue["masse_kg_m"]) if retenue else f["masse_initiale_kg_m"]
         f["_masse_courante_kg_m"] = masse
         gain = f["masse_initiale_kg_m"] - masse
@@ -2527,6 +2608,10 @@ class _CtxGlobal:
             "masse_gagnee_kg_m": round(gain, 2),
             "masse_gagnee_kg_total": round(gain * f["longueur_totale_m"], 1),
         }
+        if echec_analyse:
+            maj["message"] = ("Analyse GSA en échec en figeant cette section : "
+                              "les familles suivantes et l'état final du modèle "
+                              "reposent sur des résultats non recalculés.")
         self.job.majer_famille(f["section"], maj)
         return maj
 
@@ -2847,7 +2932,9 @@ def global_demarrer(params: dict) -> dict:
                     coefs_stabilite, longueur_par_element,
                     params.get("avec_stabilite", True) is not False,
                     bool(params.get("stabilite_approfondie")),
-                    bool(params.get("elu_perimetre_complet")),
+                    # coche par defaut cote page : absente de la requete, on
+                    # retient le perimetre COMPLET (le cas sur), pas l'inverse
+                    params.get("elu_perimetre_complet", True) is not False,
                     coefficient_els, coefficient_stabilite)
     jid = uuid.uuid4().hex
     with GLOBAL_JOBS_LOCK:
@@ -2909,14 +2996,28 @@ def charger_global(params: dict) -> dict:
             appliquees.append(profil)
         if not appliquees:
             raise DimensionnementError("Aucune section retenue à charger.")
+        # meme raison que `charger_section_optim` : sans re-analyse, le fichier
+        # enregistre porte les nouvelles sections et les anciens resultats
+        avertissement = None
+        timings = m.analyse()
+        if not all(t["ok"] for t in timings):
+            avertissement = ("Sections appliquées et fichier enregistré, mais "
+                             "l'analyse GSA a échoué : les résultats du fichier "
+                             "ne correspondent pas à ces sections — relancer "
+                             "l'analyse dans GSA.")
         m.save_to(destination)
 
     reponse = {"ok": True, "modele": destination.name, "sections": appliquees,
                "modeles": liste_modeles()}
+    if avertissement:
+        reponse["avertissement"] = avertissement
     try:
         os.startfile(destination)                  # ouvre avec GSA (association Windows)
     except OSError as ex:
-        reponse["avertissement"] = f"Fichier enregistré mais l'ouverture a échoué : {ex}"
+        # ne pas ecraser un avertissement d'analyse deja pose
+        reponse["avertissement"] = " ".join(filter(None, [
+            reponse.get("avertissement"),
+            f"Fichier enregistré mais l'ouverture a échoué : {ex}"]))
     return reponse
 
 
